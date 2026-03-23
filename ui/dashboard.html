@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid #21262d;
+    background: #161b22;
+  }
+
+  header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .conn-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #8b949e;
+  }
+
+  .conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f85149;
+    transition: background 0.3s;
+  }
+
+  .conn-dot.connected { background: #3fb950; }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    gap: 24px;
+    overflow: hidden;
+  }
+
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .agent-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .agent-card.working {
+    border-color: #238636;
+    box-shadow: 0 0 12px rgba(35, 134, 54, 0.15);
+  }
+
+  .agent-card.completed {
+    border-color: #1f6feb;
+    box-shadow: 0 0 12px rgba(31, 111, 235, 0.15);
+  }
+
+  .agent-card.stale {
+    border-color: #9e6a03;
+    box-shadow: 0 0 8px rgba(158, 106, 3, 0.1);
+    opacity: 0.7;
+  }
+
+  .agent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .agent-name {
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #484f58;
+    flex-shrink: 0;
+  }
+
+  .status-dot.idle { background: #484f58; }
+  .status-dot.working { background: #3fb950; animation: pulse 1.5s ease-in-out infinite; }
+  .status-dot.completed { background: #58a6ff; }
+  .status-dot.stale { background: #d29922; animation: pulse 2s ease-in-out infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .status-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #21262d;
+    color: #8b949e;
+  }
+
+  .status-label.working { background: #0d2818; color: #3fb950; }
+  .status-label.completed { background: #0d1d31; color: #58a6ff; }
+  .status-label.stale { background: #272115; color: #d29922; }
+
+  .agent-activity {
+    font-size: 13px;
+    color: #8b949e;
+    min-height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .agent-card.working .agent-activity { color: #e6edf3; }
+
+  .agent-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #484f58;
+  }
+
+  .tool-count { font-variant-numeric: tabular-nums; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #484f58;
+  }
+
+  .empty-state h2 {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #8b949e;
+  }
+
+  .empty-state p { font-size: 14px; }
+
+  .log-section {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .log-header {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8b949e;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .log-count {
+    font-weight: 400;
+    font-size: 12px;
+    color: #484f58;
+  }
+
+  .log-container {
+    flex: 1;
+    min-height: 150px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .log-container::-webkit-scrollbar { width: 6px; }
+  .log-container::-webkit-scrollbar-track { background: transparent; }
+  .log-container::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+  .log-entry {
+    padding: 2px 12px;
+    border-bottom: 1px solid #21262d0a;
+    display: flex;
+    gap: 10px;
+  }
+
+  .log-entry:hover { background: #1c2128; }
+
+  .log-time { color: #484f58; flex-shrink: 0; }
+  .log-agent { color: #d2a8ff; flex-shrink: 0; min-width: 120px; }
+  .log-message { color: #8b949e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .log-empty {
+    padding: 20px;
+    text-align: center;
+    color: #484f58;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Agent Dashboard</h1>
+  <div class="conn-status">
+    <div class="conn-dot" id="connDot"></div>
+    <span id="connLabel">Disconnected</span>
+  </div>
+</header>
+
+<main>
+  <div class="agents-grid" id="agentsGrid">
+    <div class="empty-state" id="emptyState">
+      <h2>No agents yet</h2>
+      <p>Waiting for Claude Code subagent events...</p>
+    </div>
+  </div>
+
+  <div class="log-section">
+    <div class="log-header">
+      Activity Log
+      <span class="log-count" id="logCount">0 events</span>
+    </div>
+    <div class="log-container" id="logContainer">
+      <div class="log-empty" id="logEmpty">No activity recorded yet</div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function() {
+  const agentsGrid = document.getElementById('agentsGrid');
+  const emptyState = document.getElementById('emptyState');
+  const logContainer = document.getElementById('logContainer');
+  const logEmpty = document.getElementById('logEmpty');
+  const logCount = document.getElementById('logCount');
+  const connDot = document.getElementById('connDot');
+  const connLabel = document.getElementById('connLabel');
+
+  const agentCards = new Map();
+  let ws = null;
+  let reconnectDelay = 2000;
+  let pollInterval = null;
+  let wsConnected = false;
+  let lastLogCount = 0;
+
+  function friendlyName(agentType) {
+    return agentType
+      .split('-')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+
+  function relativeTime(ts) {
+    if (!ts) return 'never';
+    const diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 5) return 'just now';
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
+  }
+
+  function formatTime(ts) {
+    const d = new Date(ts);
+    return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function ensureCard(agentType) {
+    if (agentCards.has(agentType)) return agentCards.get(agentType);
+
+    emptyState.style.display = 'none';
+
+    const card = document.createElement('div');
+    card.className = 'agent-card idle';
+    card.innerHTML = `
+      <div class="agent-header">
+        <div class="agent-name">
+          <div class="status-dot idle"></div>
+          ${friendlyName(agentType)}
+        </div>
+        <span class="status-label idle">Idle</span>
+      </div>
+      <div class="agent-activity"></div>
+      <div class="agent-footer">
+        <span class="tool-count">0 tools</span>
+        <span class="last-seen">never</span>
+      </div>
+    `;
+    agentsGrid.appendChild(card);
+
+    const refs = {
+      el: card,
+      dot: card.querySelector('.status-dot'),
+      label: card.querySelector('.status-label'),
+      activity: card.querySelector('.agent-activity'),
+      tools: card.querySelector('.tool-count'),
+      lastSeen: card.querySelector('.last-seen'),
+      lastSeenTs: null,
+    };
+    agentCards.set(agentType, refs);
+    return refs;
+  }
+
+  function updateCard(agentType, data) {
+    const refs = ensureCard(agentType);
+    let status = data.status || 'idle';
+
+    // If server marked it stale (working but no events for 30s+), show stale style
+    const visualStatus = (status === 'working' && data.stale) ? 'stale' : status;
+    const labelText = visualStatus === 'stale' ? 'Stale?' : status.charAt(0).toUpperCase() + status.slice(1);
+
+    refs.el.className = `agent-card ${visualStatus}`;
+    refs.dot.className = `status-dot ${visualStatus}`;
+    refs.label.className = `status-label ${visualStatus}`;
+    refs.label.textContent = labelText;
+    refs.activity.textContent = data.stale ? (data.activity ? `${data.activity} (no new events)` : 'No recent events') : (data.activity || '');
+    refs.tools.textContent = `${data.toolCount || 0} tools`;
+    refs.lastSeenTs = data.lastSeen;
+    refs.lastSeen.textContent = relativeTime(data.lastSeen);
+  }
+
+  function addLogEntry(entry) {
+    if (logEmpty) logEmpty.remove();
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = `
+      <span class="log-time">${formatTime(entry.time)}</span>
+      <span class="log-agent">[${entry.agent}]</span>
+      <span class="log-message">${escapeHtml(entry.message)}</span>
+    `;
+    logContainer.appendChild(div);
+    // Keep last 100
+    while (logContainer.children.length > 100) {
+      logContainer.removeChild(logContainer.firstChild);
+    }
+    logContainer.scrollTop = logContainer.scrollHeight;
+    logCount.textContent = `${logContainer.children.length} events`;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function handleMessage(msg) {
+    switch (msg.type) {
+      case 'full-state': {
+        const { agents, activityLog } = msg.data;
+        for (const [agentType, data] of Object.entries(agents)) {
+          updateCard(agentType, data);
+        }
+        for (const entry of activityLog) {
+          addLogEntry(entry);
+        }
+        break;
+      }
+      case 'agent-update': {
+        updateCard(msg.agent, msg.data);
+        break;
+      }
+      case 'activity': {
+        addLogEntry(msg.data);
+        break;
+      }
+    }
+  }
+
+  // Update relative timestamps every second
+  setInterval(() => {
+    for (const [, refs] of agentCards) {
+      refs.lastSeen.textContent = relativeTime(refs.lastSeenTs);
+    }
+  }, 1000);
+
+  // HTTP polling — always active as baseline, stops only when WS is live
+  async function pollState() {
+    if (wsConnected) return; // WS is handling updates
+    try {
+      const res = await fetch('/api/state');
+      const state = await res.json();
+      for (const [agentType, data] of Object.entries(state.agents)) {
+        updateCard(agentType, data);
+      }
+      if (state.activityLog.length > lastLogCount) {
+        const newEntries = state.activityLog.slice(lastLogCount);
+        for (const entry of newEntries) addLogEntry(entry);
+        lastLogCount = state.activityLog.length;
+      }
+      if (!wsConnected) {
+        connDot.classList.add('connected');
+        connLabel.textContent = 'Polling';
+      }
+    } catch {
+      connDot.classList.remove('connected');
+      connLabel.textContent = 'Server offline';
+    }
+  }
+
+  // Start polling immediately — 2s interval
+  pollState();
+  setInterval(pollState, 2000);
+
+  // WebSocket for real-time push (upgrades from polling when available)
+  function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    try {
+      ws = new WebSocket(`${proto}//${location.host}/ws`);
+    } catch { return; }
+
+    ws.onopen = () => {
+      wsConnected = true;
+      connDot.classList.add('connected');
+      connLabel.textContent = 'Connected';
+      reconnectDelay = 2000;
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        handleMessage(msg);
+      } catch { /* ignore */ }
+    };
+
+    ws.onclose = () => {
+      wsConnected = false;
+      connDot.classList.remove('connected');
+      connLabel.textContent = 'Polling';
+      setTimeout(connectWS, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+    };
+
+    ws.onerror = () => { ws.close(); };
+  }
+
+  connectWS();
+})();
+</script>
+</body>
+</html>

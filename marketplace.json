@@ -1,0 +1,11 @@
+{
+  "name": "cfir-claude-plugins",
+  "owner": { "name": "Cfir Zioni" },
+  "plugins": [
+    {
+      "name": "agent-dashboard",
+      "source": ".",
+      "description": "Real-time dashboard for monitoring Claude Code subagent activity"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "agent-dashboard",
+  "version": "1.0.0",
+  "description": "Real-time dashboard showing Claude Code subagent status and activity",
+  "author": { "name": "Cfir Zioni" },
+  "repository": "https://github.com/cfirz/claude-agent-dashboard",
+  "license": "MIT",
+  "keywords": ["monitoring", "subagents", "dashboard", "devtools", "visualization"],
+  "homepage": "https://github.com/cfirz/claude-agent-dashboard",
+  "hooks": "./hooks/hooks.json",
+  "skills": ["./skills/"]
+}
