@@ -1,6 +1,6 @@
 # Agent Dashboard Plugin for Claude Code
 
-Real-time web dashboard that visualizes Claude Code subagent status and activity. See which agents are running, what files they're reading, what commands they're executing, and when they finish — all in a live-updating browser UI.
+Real-time web dashboard that visualizes Claude Code agent activity. See the main Orchestrator and all subagents, what tools and skills they're using, what files they're reading, what commands they're executing, and when they finish — all in a live-updating browser UI.
 
 ![Dashboard showing agent cards and activity log](https://img.shields.io/badge/status-working-brightgreen)
 
@@ -10,7 +10,9 @@ Real-time web dashboard that visualizes Claude Code subagent status and activity
 Claude Code hooks (HTTP POST) --> Dashboard Server (port 8099) --> WebSocket/Polling --> Browser
 ```
 
-The plugin registers hooks for `SubagentStart`, `SubagentStop`, `PreToolUse`, and `PostToolUse` events. When Claude Code spawns subagents or they use tools, hook events are POSTed to the dashboard server, which pushes real-time updates to connected browsers via WebSocket (with HTTP polling fallback).
+The plugin registers hooks for `SubagentStart`, `SubagentStop`, `PreToolUse`, and `PostToolUse` events. When Claude Code uses tools or spawns subagents, hook events are POSTed to the dashboard server, which pushes real-time updates to connected browsers via WebSocket (with HTTP polling fallback).
+
+The main Claude Code agent appears as **Orchestrator** in the dashboard, so you can see everything it does alongside its subagents.
 
 ## Prerequisites
 
@@ -37,7 +39,17 @@ git clone https://github.com/cfirz/claude-agent-dashboard.git
 claude plugin install --plugin-dir ./claude-agent-dashboard --scope user
 ```
 
-### Option C: Manual Hook Setup
+### Option C: Quick Install Script (Windows)
+
+```bash
+git clone https://github.com/cfirz/claude-agent-dashboard.git
+cd claude-agent-dashboard
+install.bat
+```
+
+The script merges the required hooks into your global `~/.claude/settings.json`. It's idempotent — running it multiple times won't create duplicates.
+
+### Option D: Manual Hook Setup
 
 If you prefer not to use the plugin system, add the hooks directly to your Claude Code settings.
 
@@ -84,13 +96,18 @@ Navigate to **http://localhost:8099** in your browser.
 
 ### 3. Use Claude Code normally
 
-Agent cards appear automatically as subagents are spawned. Each card shows:
-- Agent name and current status
-- What the agent is doing right now (e.g., "Reading Scripts/Player/PlayerController.cs")
-- Number of tools used
-- Time since last activity
+Agent cards appear automatically as Claude Code works. Each card shows:
+- **Agent name** and current status (Orchestrator for the main agent, named cards for subagents)
+- **Current activity** (e.g., "Reading Scripts/Player/PlayerController.cs")
+- **Skills used** — purple tags (e.g., `commit`, `simplify`, `review-pr`)
+- **Tools used** — orange tags (e.g., `Read`, `Grep`, `Bash`, `Edit`)
+- **Tool count** and time since last activity
 
-The activity log at the bottom shows a timestamped feed of all agent events.
+The activity log at the bottom shows a timestamped feed of all agent events, with skill usage highlighted in purple.
+
+### 4. Clear idle agents
+
+When an agent finishes and transitions to idle, a **Clear** button appears on its card. Click it to dismiss the card from the view. The card will reappear automatically if the agent becomes active again.
 
 ## Important: Hook Timing
 
@@ -108,7 +125,7 @@ Hooks must be registered **before starting** your Claude Code session (or before
 | **Working** | Green pulsing dot, green border | Agent is actively running with live activity updates |
 | **Stale?** | Amber dot, dimmed card | Agent was working but no events received for 30s+ — may have finished without a stop event |
 | **Completed** | Blue dot, blue border | Agent finished normally, auto-resets to idle after 30s |
-| **Idle** | Gray dot, default border | No active session for this agent |
+| **Idle** | Gray dot, default border, Clear button | No active session for this agent — can be dismissed |
 
 ## Activity Descriptions
 
@@ -116,11 +133,13 @@ The dashboard converts raw tool calls into human-readable descriptions:
 
 | Tool | Example Display |
 |------|----------------|
+| `Skill` | Running skill: commit |
 | `Read` | Reading Scripts/Player/PlayerController.cs |
 | `Edit` | Editing Scripts/Core/GameManager.cs |
 | `Write` | Writing Scripts/UI/NewPanel.cs |
 | `Grep` | Searching: "PlayerController" |
 | `Glob` | Finding files: **/*.cs |
+| `Agent` | Spawning explore: Search auth patterns |
 | `Bash` (npm test) | Running tests |
 | `Bash` (npm run lint) | Running linter |
 | `Bash` (git ...) | Git: status |
@@ -133,14 +152,18 @@ The dashboard converts raw tool calls into human-readable descriptions:
 ### Server (`server/server.mjs`)
 - Zero-dependency Node.js server using built-in `http` and `crypto` modules
 - Receives hook events via HTTP POST on `/hooks/*` endpoints
-- Maintains in-memory agent state (not persisted — resets on server restart)
+- Tracks the main agent as "orchestrator" (events with no `agent_type`)
+- Maintains in-memory agent state with skills and tools arrays per agent
 - WebSocket push for real-time updates, with HTTP polling fallback (`/api/state`)
 - Stale agent detection: 30s no events = amber warning, 90s = auto-idle
+- Skills and tools are cleared when an agent returns to idle
 
 ### Dashboard (`ui/dashboard.html`)
 - Single HTML file with inline CSS and JavaScript
 - Dark theme (GitHub dark palette)
 - Responsive CSS grid layout for agent cards
+- Skills shown as purple tags, tools as orange tags on each card
+- Dismissible idle cards with Clear button (re-appear when agent is active again)
 - WebSocket connection with automatic reconnect + HTTP polling fallback
 - Relative timestamps updated every second
 
@@ -203,6 +226,7 @@ claude-agent-dashboard/
 ├── skills/
 │   └── dashboard/
 │       └── SKILL.md             # /agent-dashboard:dashboard slash command
+├── install.bat                  # Windows quick-install script for hooks
 ├── marketplace.json             # Marketplace catalog for plugin distribution
 ├── LICENSE                      # MIT
 └── README.md                    # This file
