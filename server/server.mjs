@@ -15,6 +15,7 @@ const WS_MAGIC = '258EAFA5-E914-47DA-95CA-5AB9A3F8D85E';
 
 // --- State ---
 
+const ORCHESTRATOR = 'orchestrator';
 const agents = new Map(); // agent_type -> { status, activity, lastSeen, toolCount, agentId }
 const activityLog = [];   // circular buffer, max 100
 const MAX_LOG = 100;
@@ -29,6 +30,8 @@ function getAgentState(agentType) {
       toolCount: 0,
       agentId: null,
       stale: false,
+      skills: [],
+      tools: [],
     });
   }
   return agents.get(agentType);
@@ -53,6 +56,7 @@ function describeActivity(toolName, toolInput) {
   if (!toolName) return '';
   const input = toolInput || {};
 
+  if (toolName === 'Skill') return `Running skill: ${input.skill || 'unknown'}`;
   if (toolName === 'Read') return `Reading ${shortPath(input.file_path)}`;
   if (toolName === 'Write') return `Writing ${shortPath(input.file_path)}`;
   if (toolName === 'Edit') return `Editing ${shortPath(input.file_path)}`;
@@ -133,6 +137,8 @@ function handleSubagentStart(body) {
   agent.toolCount = 0;
   agent.agentId = body.agent_id || null;
   agent.stale = false;
+  agent.skills = [];
+  agent.tools = [];
   broadcast({ type: 'agent-update', agent: agentType, data: { ...agent } });
   pushLog(agentType, 'Started');
 }
@@ -145,20 +151,22 @@ function handleSubagentStop(body) {
   agent.activity = 'Finished';
   agent.lastSeen = Date.now();
   broadcast({ type: 'agent-update', agent: agentType, data: { ...agent } });
-  pushLog(agentType, `Completed (${agent.toolCount} tools used)`);
+  const skillsSuffix = agent.skills.length ? `, skills: ${agent.skills.join(', ')}` : '';
+  pushLog(agentType, `Completed (${agent.toolCount} tools used${skillsSuffix})`);
   // Auto-transition to idle after 30s
   setTimeout(() => {
     if (agent.status === 'completed') {
       agent.status = 'idle';
       agent.activity = '';
+      agent.skills = [];
+      agent.tools = [];
       broadcast({ type: 'agent-update', agent: agentType, data: { ...agent } });
     }
   }, 30_000);
 }
 
 function handlePreToolUse(body) {
-  const agentType = body.agent_type;
-  if (!agentType) return; // skip main agent events
+  const agentType = body.agent_type || ORCHESTRATOR;
   const agent = getAgentState(agentType);
   const toolName = body.tool_name || '';
   let toolInput = body.tool_input;
@@ -169,6 +177,14 @@ function handlePreToolUse(body) {
   agent.activity = activity;
   agent.lastSeen = Date.now();
   agent.toolCount++;
+  if (toolName === 'Skill') {
+    const skillName = toolInput?.skill;
+    if (skillName && !agent.skills.includes(skillName)) {
+      agent.skills.push(skillName);
+    }
+  } else if (toolName && !agent.tools.includes(toolName)) {
+    agent.tools.push(toolName);
+  }
   agent.stale = false;
   if (agent.status !== 'working') agent.status = 'working';
   broadcast({ type: 'agent-update', agent: agentType, data: { ...agent } });
@@ -176,8 +192,7 @@ function handlePreToolUse(body) {
 }
 
 function handlePostToolUse(body) {
-  const agentType = body.agent_type;
-  if (!agentType) return;
+  const agentType = body.agent_type || ORCHESTRATOR;
   const agent = agents.get(agentType);
   if (agent) {
     agent.lastSeen = Date.now();
@@ -196,6 +211,8 @@ setInterval(() => {
         // 90s with no events → assume agent is gone
         agent.status = 'idle';
         agent.activity = '';
+        agent.skills = [];
+        agent.tools = [];
         broadcast({ type: 'agent-update', agent: agentType, data: { ...agent } });
         pushLog(agentType, 'No events for 90s — marked idle');
       } else if (age > 30_000 && !agent.stale) {

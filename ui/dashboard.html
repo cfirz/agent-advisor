@@ -149,6 +149,40 @@
 
   .agent-card.working .agent-activity { color: #e6edf3; }
 
+  .agent-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .skill-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #1c1231;
+    color: #d2a8ff;
+    border: 1px solid #3d2a6b;
+  }
+
+  .agent-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .tool-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #2b1d0e;
+    color: #e3b341;
+    border: 1px solid #5c3d12;
+  }
+
   .agent-footer {
     display: flex;
     justify-content: space-between;
@@ -157,6 +191,23 @@
   }
 
   .tool-count { font-variant-numeric: tabular-nums; }
+
+  .clear-btn {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: #21262d;
+    color: #8b949e;
+    border: 1px solid #30363d;
+    cursor: pointer;
+    display: none;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .clear-btn:hover { background: #30363d; color: #e6edf3; }
+
+  .agent-card.idle .clear-btn { display: inline-block; }
 
   .empty-state {
     text-align: center;
@@ -227,6 +278,7 @@
   .log-time { color: #484f58; flex-shrink: 0; }
   .log-agent { color: #d2a8ff; flex-shrink: 0; min-width: 120px; }
   .log-message { color: #8b949e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .log-message.log-skill { color: #d2a8ff; }
 
   .log-empty {
     padding: 20px;
@@ -276,6 +328,7 @@
   const connLabel = document.getElementById('connLabel');
 
   const agentCards = new Map();
+  const clearedAgents = new Set(); // agents the user dismissed — skip until they become non-idle again
   let ws = null;
   let reconnectDelay = 2000;
   let pollInterval = null;
@@ -283,6 +336,7 @@
   let lastLogCount = 0;
 
   function friendlyName(agentType) {
+    if (agentType === 'orchestrator') return 'Orchestrator';
     return agentType
       .split('-')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
@@ -316,9 +370,14 @@
           <div class="status-dot idle"></div>
           ${friendlyName(agentType)}
         </div>
-        <span class="status-label idle">Idle</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="status-label idle">Idle</span>
+          <button class="clear-btn">Clear</button>
+        </div>
       </div>
       <div class="agent-activity"></div>
+      <div class="agent-skills"></div>
+      <div class="agent-tools"></div>
       <div class="agent-footer">
         <span class="tool-count">0 tools</span>
         <span class="last-seen">never</span>
@@ -326,11 +385,21 @@
     `;
     agentsGrid.appendChild(card);
 
+    const clearBtn = card.querySelector('.clear-btn');
+    clearBtn.addEventListener('click', () => {
+      card.remove();
+      agentCards.delete(agentType);
+      clearedAgents.add(agentType);
+      if (agentCards.size === 0) emptyState.style.display = '';
+    });
+
     const refs = {
       el: card,
       dot: card.querySelector('.status-dot'),
       label: card.querySelector('.status-label'),
       activity: card.querySelector('.agent-activity'),
+      skills: card.querySelector('.agent-skills'),
+      toolTags: card.querySelector('.agent-tools'),
       tools: card.querySelector('.tool-count'),
       lastSeen: card.querySelector('.last-seen'),
       lastSeenTs: null,
@@ -340,8 +409,13 @@
   }
 
   function updateCard(agentType, data) {
+    const status = data.status || 'idle';
+    // If user cleared this agent and it's still idle, skip re-creating the card
+    if (clearedAgents.has(agentType)) {
+      if (status === 'idle' || status === 'completed') return;
+      clearedAgents.delete(agentType); // agent is active again — re-show it
+    }
     const refs = ensureCard(agentType);
-    let status = data.status || 'idle';
 
     // If server marked it stale (working but no events for 30s+), show stale style
     const visualStatus = (status === 'working' && data.stale) ? 'stale' : status;
@@ -352,6 +426,12 @@
     refs.label.className = `status-label ${visualStatus}`;
     refs.label.textContent = labelText;
     refs.activity.textContent = data.stale ? (data.activity ? `${data.activity} (no new events)` : 'No recent events') : (data.activity || '');
+    const skills = data.skills || [];
+    refs.skills.innerHTML = skills.map(s => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('');
+    refs.skills.style.display = skills.length ? 'flex' : 'none';
+    const tools = data.tools || [];
+    refs.toolTags.innerHTML = tools.map(t => `<span class="tool-tag">${escapeHtml(t)}</span>`).join('');
+    refs.toolTags.style.display = tools.length ? 'flex' : 'none';
     refs.tools.textContent = `${data.toolCount || 0} tools`;
     refs.lastSeenTs = data.lastSeen;
     refs.lastSeen.textContent = relativeTime(data.lastSeen);
@@ -364,7 +444,7 @@
     div.innerHTML = `
       <span class="log-time">${formatTime(entry.time)}</span>
       <span class="log-agent">[${entry.agent}]</span>
-      <span class="log-message">${escapeHtml(entry.message)}</span>
+      <span class="log-message${entry.message.startsWith('Running skill:') ? ' log-skill' : ''}">${escapeHtml(entry.message)}</span>
     `;
     logContainer.appendChild(div);
     // Keep last 100
