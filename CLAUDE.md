@@ -4,7 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A zero-dependency Claude Code plugin that provides a real-time web dashboard for visualizing subagent status and activity. Events flow from Claude Code hooks (HTTP POST) → Node.js server (port 8099) → WebSocket/polling → browser UI.
+A zero-dependency Claude Code plugin that provides a real-time web dashboard for visualizing subagent status, activity, and performance — plus an AI-powered advisor that suggests new agents or improvements to existing ones.
+
+Events flow: Claude Code hooks (HTTP POST) → Node.js server (port 8099) → WebSocket/polling → browser UI.
+
+## Session Startup (REQUIRED)
+
+At the start of every session, ensure the dashboard server is running:
+
+1. Check if the server is already listening: `curl -s http://localhost:8099/api/state`
+2. If not running, start it in the background: `node server/server.mjs &`
+3. The dashboard UI is at `http://localhost:8099`
+
+This must happen before any subagents are spawned so the hooks can deliver events.
 
 ## Running the Server
 
@@ -13,27 +25,29 @@ node server/server.mjs
 # Override default port: PORT=9000 node server/server.mjs
 ```
 
-No build step, no npm install, no test framework. Pure vanilla JS/HTML with only Node.js built-in modules (`http`, `crypto`, `fs/promises`, `path`, `url`).
+No build step, no npm install, no test framework. Pure vanilla JS/HTML with only Node.js built-in modules (`http`, `crypto`, `fs/promises`, `path`, `url`, `os`).
 
 ## Architecture
 
 **Hook-based event streaming** with three layers:
 
-1. **Hooks** (`hooks/hooks.json`) — 4 HTTP hooks registered with Claude Code: `SubagentStart`, `SubagentStop`, `PreToolUse`, `PostToolUse`, all POST to `localhost:8099/hooks/*`
+1. **Hooks** (`hooks/hooks.json`) — HTTP hooks registered with Claude Code: `SubagentStart`, `SubagentStop`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `Notification`, `SessionStart`, `SessionEnd` — all POST to `localhost:8099/hooks/*`
 
-2. **Server** (`server/server.mjs`) — Stateful HTTP+WebSocket server. Maintains an `agents` Map (agent type → status/activity) and a circular `activityLog` buffer (max 100). Custom RFC 6455 WebSocket frame encoder/decoder (no library). Stale detection runs every 5s (30s → amber warning, 90s → auto-idle).
+2. **Server** (`server/server.mjs`) — Stateful HTTP+WebSocket server. Maintains an `agents` Map and a circular `activityLog` buffer (max 100). Custom RFC 6455 WebSocket frame encoder/decoder (no library). Stale detection every 5s (30s → amber warning, 90s → auto-idle). Also maintains `metrics` (persisted to `.claude/advisor-data/metrics.json`) and `suggestions` (persisted to `.claude/advisor-data/suggestions.json`).
 
-3. **UI** (`ui/dashboard.html`) — Single self-contained HTML file with inline CSS/JS. Dark theme (GitHub palette). Responsive grid of agent cards. WebSocket with exponential backoff reconnect, HTTP polling (2s) as fallback. Relative timestamps updated every 1s.
+3. **UI** (`ui/dashboard.html`) — Single self-contained HTML file with inline CSS/JS. Dark theme (GitHub palette). Agent cards grid, Agent Advisor panel, activity log. WebSocket with exponential backoff reconnect, HTTP polling (2s) as fallback.
 
-**Key design choice:** Multiple agents of the same type share one card (latest instance's status shown); the activity log tracks all instances individually.
+**Key design choice:** Multiple agents of the same type share one card (latest instance shown); the activity log tracks all instances individually.
 
 ## Plugin Structure
 
 - `.claude-plugin/plugin.json` — Plugin manifest (hooks + skills references)
 - `hooks/hooks.json` — Hook definitions pointing to server endpoints
-- `server/server.mjs` — The entire backend (~420 lines)
-- `ui/dashboard.html` — The entire frontend (~480 lines)
+- `server/server.mjs` — The entire backend
+- `ui/dashboard.html` — The entire frontend (CSS + HTML + JS, all inline)
 - `skills/dashboard/SKILL.md` — `/agent-dashboard:dashboard` slash command
+- `skills/advisor/SKILL.md` — `/agent-dashboard:advisor` slash command
+- `.claude/advisor-data/` — Persisted metrics and suggestions (auto-created)
 - `marketplace.json` — Marketplace distribution metadata
 
 ## Agent State Lifecycle
@@ -44,6 +58,33 @@ idle → working (SubagentStart) → completed (SubagentStop) → idle (30s time
                 ↑ stale detection (30s amber, 90s auto-idle)
 ```
 
+## Agent Advisor Feature
+
+The advisor analyzes subagent performance and suggests new agents or improvements.
+
+**Data flow:**
+```
+Hook events → server accumulates metrics → /advisor skill fetches + analyzes
+                                        → POSTs suggestions to server
+                                        → dashboard displays cards with approve/dismiss
+                                        → approve writes .md file to .claude/agents/
+```
+
+- **Metrics** accumulate automatically on every `SubagentStop` event; flushed to disk on `SessionEnd`
+- **Suggestions** are generated by running `/agent-dashboard:advisor` in Claude Code
+- **Approval** writes the proposed `.md` file to `.claude/agents/` atomically (temp file + rename)
+- **Path safety**: Approve endpoint validates paths stay within `.claude/agents/` to prevent traversal
+
+**Key endpoints:**
+- `GET /api/advisor/metrics` — accumulated performance data (for the skill to fetch)
+- `POST /api/advisor/suggestions` — ingest suggestions from the advisor skill
+- `POST /api/advisor/approve` — write agent file to disk
+- `POST /api/advisor/dismiss` — mark dismissed
+
 ## Extending Tool Descriptions
 
 The `describeActivity()` function in `server/server.mjs` maps tool names/inputs to human-readable text. Add new tool mappings there when supporting additional tools.
+
+## WebSocket Message Types
+
+Server → browser: `full-state` (on connect), `agent-update`, `activity`, `session-update`, `advisor-suggestions`, `advisor-update`

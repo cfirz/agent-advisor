@@ -1,5 +1,19 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s http://localhost:8099/api/state > /dev/null 2>&1 || node \"$CLAUDE_PROJECT_DIR/server/server.mjs\" &"
+          },
+          {
+            "type": "http",
+            "url": "http://localhost:8099/hooks/session-start"
+          }
+        ]
+      }
+    ],
     "SubagentStart": [
       {
         "hooks": [
@@ -66,20 +80,6 @@
           {
             "type": "http",
             "url": "http://localhost:8099/hooks/notification"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s http://localhost:8099/api/state > /dev/null 2>&1 || node \"$CLAUDE_PROJECT_DIR/server/server.mjs\" &"
-          },
-          {
-            "type": "http",
-            "url": "http://localhost:8099/hooks/session-start"
           }
         ]
       }

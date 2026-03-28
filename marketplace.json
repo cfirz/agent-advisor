@@ -4,7 +4,7 @@
   "plugins": [
     {
       "name": "agent-dashboard",
-      "source": ".",
+      "source": "./",
       "description": "Real-time dashboard for monitoring Claude Code subagent activity"
     }
   ]

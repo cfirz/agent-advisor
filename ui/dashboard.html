@@ -49,6 +49,52 @@
 
   .conn-dot.connected { background: #3fb950; }
 
+  /* Session Summary Bar */
+  .session-bar {
+    display: none;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 24px;
+    background: #161b22;
+    border-bottom: 1px solid #21262d;
+    font-size: 12px;
+    color: #8b949e;
+    flex-wrap: wrap;
+  }
+
+  .session-bar.active { display: flex; }
+
+  .session-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .session-stat .stat-label {
+    color: #484f58;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .session-stat .stat-value {
+    font-variant-numeric: tabular-nums;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    color: #e6edf3;
+    font-size: 12px;
+  }
+
+  .session-stat .stat-value.tokens { color: #7ee787; }
+  .session-stat .stat-value.errors { color: #f85149; }
+  .session-stat .stat-value.no-errors { color: #484f58; }
+
+  .session-divider {
+    width: 1px;
+    height: 16px;
+    background: #21262d;
+  }
+
   main {
     flex: 1;
     display: flex;
@@ -138,6 +184,25 @@
   .status-label.completed { background: #0d1d31; color: #58a6ff; }
   .status-label.stale { background: #272115; color: #d29922; }
 
+  .agent-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .error-badge {
+    display: none;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #3d1418;
+    color: #f85149;
+    border: 1px solid #6e2b2f;
+  }
+
+  .error-badge.visible { display: inline-block; }
+
   .agent-activity {
     font-size: 13px;
     color: #8b949e;
@@ -148,6 +213,17 @@
   }
 
   .agent-card.working .agent-activity { color: #e6edf3; }
+
+  .agent-error {
+    font-size: 12px;
+    color: #f85149;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: none;
+  }
+
+  .agent-error.visible { display: block; }
 
   .agent-skills {
     display: flex;
@@ -182,6 +258,19 @@
     color: #e3b341;
     border: 1px solid #5c3d12;
   }
+
+  .agent-tokens {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    color: #7ee787;
+  }
+
+  .agent-tokens.visible { display: flex; }
+
+  .agent-tokens .token-label { color: #484f58; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 
   .agent-footer {
     display: flex;
@@ -279,6 +368,9 @@
   .log-agent { color: #d2a8ff; flex-shrink: 0; min-width: 120px; }
   .log-message { color: #8b949e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .log-message.log-skill { color: #d2a8ff; }
+  .log-message.log-error { color: #f85149; }
+  .log-message.log-notification { color: #58a6ff; }
+  .log-message.log-session { color: #3fb950; }
 
   .log-empty {
     padding: 20px;
@@ -286,17 +378,266 @@
     color: #484f58;
     font-style: italic;
   }
+
+  /* Advisor Panel */
+  .advisor-panel {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .advisor-panel.visible { display: block; }
+
+  .advisor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid transparent;
+    transition: background 0.2s;
+  }
+
+  .advisor-header:hover { background: #1c2128; }
+
+  .advisor-panel.expanded .advisor-header { border-bottom-color: #21262d; }
+
+  .advisor-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #d2a8ff;
+  }
+
+  .advisor-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #3d1f6d;
+    color: #d2a8ff;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .advisor-toggle {
+    font-size: 12px;
+    color: #484f58;
+    transition: transform 0.2s;
+  }
+
+  .advisor-panel.expanded .advisor-toggle { transform: rotate(180deg); }
+
+  .advisor-body {
+    display: none;
+    padding: 12px;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .advisor-panel.expanded .advisor-body { display: flex; }
+
+  .suggestion-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-left: 3px solid #484f58;
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: opacity 0.3s;
+  }
+
+  .suggestion-card.new-agent { border-left-color: #d2a8ff; }
+  .suggestion-card.improve-agent { border-left-color: #58a6ff; }
+  .suggestion-card.approved { border-left-color: #3fb950; opacity: 0.7; }
+  .suggestion-card.dismissed { border-left-color: #484f58; opacity: 0.4; }
+
+  .suggestion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .suggestion-type-badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .suggestion-type-badge.new-agent { background: #1c1231; color: #d2a8ff; }
+  .suggestion-type-badge.improve-agent { background: #0d1d31; color: #58a6ff; }
+
+  .suggestion-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e6edf3;
+    flex: 1;
+  }
+
+  .suggestion-status-label {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .suggestion-status-label.pending { background: #272115; color: #d29922; }
+  .suggestion-status-label.approved { background: #0d2818; color: #3fb950; }
+  .suggestion-status-label.dismissed { background: #21262d; color: #484f58; }
+
+  .suggestion-summary {
+    font-size: 13px;
+    color: #8b949e;
+    line-height: 1.5;
+  }
+
+  .suggestion-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .suggestion-actions button {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    background: #21262d;
+    color: #8b949e;
+  }
+
+  .suggestion-actions button:hover { background: #30363d; color: #e6edf3; }
+  .suggestion-actions button:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+
+  .btn-approve { border-color: #238636 !important; color: #3fb950 !important; }
+  .btn-approve:hover { background: #0d2818 !important; }
+
+  .btn-dismiss { color: #484f58 !important; }
+
+  .btn-details { color: #58a6ff !important; }
+
+  .suggestion-detail {
+    display: none;
+    background: #010409;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .suggestion-detail.visible { display: block; }
+
+  .suggestion-detail pre {
+    margin: 0;
+    padding: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #e6edf3;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .diff-line { padding: 0 12px; font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .diff-line-add { background: #0d2818; color: #7ee787; }
+  .diff-line-remove { background: #3d1418; color: #ffa198; }
+  .diff-line-context { color: #8b949e; }
+  .diff-header { padding: 8px 12px; font-size: 11px; font-weight: 600; color: #484f58; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #21262d; background: #0d1117; }
+
+  /* Run Advisor button in header */
+  .advisor-btn {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid #3d1f6d;
+    background: #1c1231;
+    color: #d2a8ff;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .advisor-btn:hover { background: #2d1b4e; border-color: #d2a8ff; }
+
+  .advisor-toast {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1c1231;
+    border: 1px solid #3d1f6d;
+    color: #d2a8ff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .advisor-toast.show { display: block; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Agent Dashboard</h1>
-  <div class="conn-status">
-    <div class="conn-dot" id="connDot"></div>
-    <span id="connLabel">Disconnected</span>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button class="advisor-btn" id="advisorBtn" title="Generate agent suggestions">Advisor</button>
+    <div class="conn-status">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connLabel">Disconnected</span>
+    </div>
   </div>
 </header>
+
+<div class="session-bar" id="sessionBar">
+  <div class="session-stat">
+    <span class="stat-label">Session</span>
+    <span class="stat-value" id="sessionDuration">—</span>
+  </div>
+  <div class="session-divider"></div>
+  <div class="session-stat">
+    <span class="stat-label">Agents</span>
+    <span class="stat-value" id="sessionAgents">0</span>
+  </div>
+  <div class="session-divider"></div>
+  <div class="session-stat">
+    <span class="stat-label">Tokens In</span>
+    <span class="stat-value tokens" id="sessionTokensIn">0</span>
+  </div>
+  <div class="session-stat">
+    <span class="stat-label">Tokens Out</span>
+    <span class="stat-value tokens" id="sessionTokensOut">0</span>
+  </div>
+  <div class="session-divider"></div>
+  <div class="session-stat">
+    <span class="stat-label">Errors</span>
+    <span class="stat-value no-errors" id="sessionErrors">0</span>
+  </div>
+</div>
 
 <main>
   <div class="agents-grid" id="agentsGrid">
@@ -305,6 +646,19 @@
       <p>Waiting for Claude Code subagent events...</p>
     </div>
   </div>
+
+  <div class="advisor-panel" id="advisorPanel">
+    <div class="advisor-header" id="advisorHeaderToggle">
+      <div class="advisor-title">
+        Agent Advisor
+        <span class="advisor-badge" id="advisorBadge">0</span>
+      </div>
+      <span class="advisor-toggle" id="advisorToggle">&#9660;</span>
+    </div>
+    <div class="advisor-body" id="advisorBody"></div>
+  </div>
+
+  <div class="advisor-toast" id="advisorToast">Run <strong>/agent-dashboard:advisor</strong> in Claude Code to generate suggestions</div>
 
   <div class="log-section">
     <div class="log-header">
@@ -326,17 +680,24 @@
   const logCount = document.getElementById('logCount');
   const connDot = document.getElementById('connDot');
   const connLabel = document.getElementById('connLabel');
+  const sessionBar = document.getElementById('sessionBar');
+  const sessionDuration = document.getElementById('sessionDuration');
+  const sessionAgents = document.getElementById('sessionAgents');
+  const sessionTokensIn = document.getElementById('sessionTokensIn');
+  const sessionTokensOut = document.getElementById('sessionTokensOut');
+  const sessionErrors = document.getElementById('sessionErrors');
 
   const agentCards = new Map();
-  const clearedAgents = new Set(); // agents the user dismissed — skip until they become non-idle again
+  const clearedAgents = new Set();
   let ws = null;
   let reconnectDelay = 2000;
-  let pollInterval = null;
   let wsConnected = false;
   let lastLogCount = 0;
+  let sessionStartTime = null;
 
   function friendlyName(agentType) {
     if (agentType === 'orchestrator') return 'Orchestrator';
+    if (agentType === 'system') return 'System';
     return agentType
       .split('-')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
@@ -352,15 +713,54 @@
     return `${Math.floor(diff / 3600)}h ago`;
   }
 
+  function formatDuration(ms) {
+    if (!ms || ms <= 0) return '—';
+    const s = Math.floor(ms / 1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60);
+    const rs = s % 60;
+    if (m < 60) return `${m}m ${rs}s`;
+    const h = Math.floor(m / 60);
+    const rm = m % 60;
+    return `${h}h ${rm}m`;
+  }
+
   function formatTime(ts) {
     const d = new Date(ts);
     return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
-  function ensureCard(agentType) {
-    if (agentCards.has(agentType)) return agentCards.get(agentType);
+  function formatTokens(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    return String(n);
+  }
+
+  function updateSessionBar(session) {
+    if (!session) return;
+    if (session.startTime || session.agentCount > 0 || session.sessionId) {
+      sessionBar.classList.add('active');
+    }
+    sessionStartTime = session.startTime;
+    sessionAgents.textContent = session.agentCount || 0;
+    const t = session.totalTokens || {};
+    const totalIn = (t.input || 0) + (t.cacheCreation || 0) + (t.cacheRead || 0);
+    sessionTokensIn.textContent = formatTokens(totalIn);
+    sessionTokensOut.textContent = formatTokens(t.output || 0);
+    const errs = session.totalErrors || 0;
+    sessionErrors.textContent = errs;
+    sessionErrors.className = errs > 0 ? 'stat-value errors' : 'stat-value no-errors';
+  }
+
+  function ensureCard(agentKey, displayName) {
+    if (agentCards.has(agentKey)) return agentCards.get(agentKey);
 
     emptyState.style.display = 'none';
+    // Use displayName (agentType) for the card title, agentKey for uniqueness
+    const name = displayName || agentKey;
+    // Show short instance id if key contains ::
+    const idPart = agentKey.includes('::') ? agentKey.split('::')[1] : '';
+    const shortId = idPart ? ` #${idPart.slice(-6)}` : '';
 
     const card = document.createElement('div');
     card.className = 'agent-card idle';
@@ -368,16 +768,25 @@
       <div class="agent-header">
         <div class="agent-name">
           <div class="status-dot idle"></div>
-          ${friendlyName(agentType)}
+          ${friendlyName(name)}<span style="color:#484f58;font-size:12px;font-weight:400">${shortId}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;">
+        <div class="agent-header-right">
+          <span class="error-badge"></span>
           <span class="status-label idle">Idle</span>
           <button class="clear-btn">Clear</button>
         </div>
       </div>
       <div class="agent-activity"></div>
+      <div class="agent-error"></div>
       <div class="agent-skills"></div>
       <div class="agent-tools"></div>
+      <div class="agent-tokens">
+        <span class="token-label">Tokens</span>
+        <span class="token-in"></span>
+        <span style="color:#484f58">in /</span>
+        <span class="token-out"></span>
+        <span style="color:#484f58">out</span>
+      </div>
       <div class="agent-footer">
         <span class="tool-count">0 tools</span>
         <span class="last-seen">never</span>
@@ -388,8 +797,8 @@
     const clearBtn = card.querySelector('.clear-btn');
     clearBtn.addEventListener('click', () => {
       card.remove();
-      agentCards.delete(agentType);
-      clearedAgents.add(agentType);
+      agentCards.delete(agentKey);
+      clearedAgents.add(agentKey);
       if (agentCards.size === 0) emptyState.style.display = '';
     });
 
@@ -398,26 +807,30 @@
       dot: card.querySelector('.status-dot'),
       label: card.querySelector('.status-label'),
       activity: card.querySelector('.agent-activity'),
+      errorEl: card.querySelector('.agent-error'),
+      errorBadge: card.querySelector('.error-badge'),
       skills: card.querySelector('.agent-skills'),
       toolTags: card.querySelector('.agent-tools'),
+      tokensRow: card.querySelector('.agent-tokens'),
+      tokenIn: card.querySelector('.token-in'),
+      tokenOut: card.querySelector('.token-out'),
       tools: card.querySelector('.tool-count'),
       lastSeen: card.querySelector('.last-seen'),
       lastSeenTs: null,
     };
-    agentCards.set(agentType, refs);
+    agentCards.set(agentKey, refs);
     return refs;
   }
 
-  function updateCard(agentType, data) {
+  function updateCard(agentKey, data) {
     const status = data.status || 'idle';
-    // If user cleared this agent and it's still idle, skip re-creating the card
-    if (clearedAgents.has(agentType)) {
+    if (clearedAgents.has(agentKey)) {
       if (status === 'idle' || status === 'completed') return;
-      clearedAgents.delete(agentType); // agent is active again — re-show it
+      clearedAgents.delete(agentKey);
     }
-    const refs = ensureCard(agentType);
+    // Use agentType from data for display name, agentKey for card identity
+    const refs = ensureCard(agentKey, data.agentType);
 
-    // If server marked it stale (working but no events for 30s+), show stale style
     const visualStatus = (status === 'working' && data.stale) ? 'stale' : status;
     const labelText = visualStatus === 'stale' ? 'Stale?' : status.charAt(0).toUpperCase() + status.slice(1);
 
@@ -426,12 +839,43 @@
     refs.label.className = `status-label ${visualStatus}`;
     refs.label.textContent = labelText;
     refs.activity.textContent = data.stale ? (data.activity ? `${data.activity} (no new events)` : 'No recent events') : (data.activity || '');
+
+    // Error badge
+    const errors = data.errors || 0;
+    if (errors > 0) {
+      refs.errorBadge.textContent = `${errors} error${errors > 1 ? 's' : ''}`;
+      refs.errorBadge.classList.add('visible');
+    } else {
+      refs.errorBadge.classList.remove('visible');
+    }
+
+    // Last error message
+    if (data.lastError) {
+      refs.errorEl.textContent = `Failed: ${data.lastError.tool} — ${data.lastError.message}`;
+      refs.errorEl.classList.add('visible');
+    } else {
+      refs.errorEl.classList.remove('visible');
+    }
+
     const skills = data.skills || [];
     refs.skills.innerHTML = skills.map(s => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('');
     refs.skills.style.display = skills.length ? 'flex' : 'none';
     const tools = data.tools || [];
     refs.toolTags.innerHTML = tools.map(t => `<span class="tool-tag">${escapeHtml(t)}</span>`).join('');
     refs.toolTags.style.display = tools.length ? 'flex' : 'none';
+
+    // Token display
+    const tokens = data.tokens || {};
+    const totalIn = (tokens.input || 0) + (tokens.cacheCreation || 0) + (tokens.cacheRead || 0);
+    const totalOut = tokens.output || 0;
+    if (totalIn > 0 || totalOut > 0) {
+      refs.tokenIn.textContent = formatTokens(totalIn);
+      refs.tokenOut.textContent = formatTokens(totalOut);
+      refs.tokensRow.classList.add('visible');
+    } else {
+      refs.tokensRow.classList.remove('visible');
+    }
+
     refs.tools.textContent = `${data.toolCount || 0} tools`;
     refs.lastSeenTs = data.lastSeen;
     refs.lastSeen.textContent = relativeTime(data.lastSeen);
@@ -441,13 +885,18 @@
     if (logEmpty) logEmpty.remove();
     const div = document.createElement('div');
     div.className = 'log-entry';
+    const level = entry.level || 'info';
+    let msgClass = 'log-message';
+    if (entry.message.startsWith('Running skill:')) msgClass += ' log-skill';
+    if (level === 'error') msgClass += ' log-error';
+    if (level === 'notification') msgClass += ' log-notification';
+    if (level === 'session') msgClass += ' log-session';
     div.innerHTML = `
       <span class="log-time">${formatTime(entry.time)}</span>
       <span class="log-agent">[${entry.agent}]</span>
-      <span class="log-message${entry.message.startsWith('Running skill:') ? ' log-skill' : ''}">${escapeHtml(entry.message)}</span>
+      <span class="${msgClass}">${escapeHtml(entry.message)}</span>
     `;
     logContainer.appendChild(div);
-    // Keep last 100
     while (logContainer.children.length > 100) {
       logContainer.removeChild(logContainer.firstChild);
     }
@@ -464,12 +913,16 @@
   function handleMessage(msg) {
     switch (msg.type) {
       case 'full-state': {
-        const { agents, activityLog } = msg.data;
+        const { agents, activityLog, session, suggestions } = msg.data;
+        if (session) updateSessionBar(session);
         for (const [agentType, data] of Object.entries(agents)) {
           updateCard(agentType, data);
         }
         for (const entry of activityLog) {
           addLogEntry(entry);
+        }
+        if (suggestions) {
+          for (const s of suggestions) addOrUpdateSuggestion(s);
         }
         break;
       }
@@ -481,22 +934,35 @@
         addLogEntry(msg.data);
         break;
       }
+      case 'session-update': {
+        updateSessionBar(msg.data);
+        break;
+      }
+      case 'advisor-suggestions':
+      case 'advisor-update': {
+        handleAdvisorMessage(msg);
+        break;
+      }
     }
   }
 
-  // Update relative timestamps every second
+  // Update relative timestamps and session duration every second
   setInterval(() => {
     for (const [, refs] of agentCards) {
       refs.lastSeen.textContent = relativeTime(refs.lastSeenTs);
+    }
+    if (sessionStartTime) {
+      sessionDuration.textContent = formatDuration(Date.now() - sessionStartTime);
     }
   }, 1000);
 
   // HTTP polling — always active as baseline, stops only when WS is live
   async function pollState() {
-    if (wsConnected) return; // WS is handling updates
+    if (wsConnected) return;
     try {
       const res = await fetch('/api/state');
       const state = await res.json();
+      if (state.session) updateSessionBar(state.session);
       for (const [agentType, data] of Object.entries(state.agents)) {
         updateCard(agentType, data);
       }
@@ -504,6 +970,9 @@
         const newEntries = state.activityLog.slice(lastLogCount);
         for (const entry of newEntries) addLogEntry(entry);
         lastLogCount = state.activityLog.length;
+      }
+      if (state.suggestions) {
+        for (const s of state.suggestions) addOrUpdateSuggestion(s);
       }
       if (!wsConnected) {
         connDot.classList.add('connected');
@@ -515,11 +984,10 @@
     }
   }
 
-  // Start polling immediately — 2s interval
   pollState();
   setInterval(pollState, 2000);
 
-  // WebSocket for real-time push (upgrades from polling when available)
+  // WebSocket for real-time push
   function connectWS() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     try {
@@ -552,6 +1020,191 @@
   }
 
   connectWS();
+
+  // --- Advisor Panel ---
+
+  const advisorPanel = document.getElementById('advisorPanel');
+  const advisorBody = document.getElementById('advisorBody');
+  const advisorBadge = document.getElementById('advisorBadge');
+  const advisorBtn = document.getElementById('advisorBtn');
+  const advisorToast = document.getElementById('advisorToast');
+  const advisorHeaderToggle = document.getElementById('advisorHeaderToggle');
+  const suggestionMap = new Map(); // id -> { data, el }
+
+  advisorHeaderToggle.addEventListener('click', () => {
+    advisorPanel.classList.toggle('expanded');
+  });
+
+  advisorBtn.addEventListener('click', () => {
+    advisorToast.classList.add('show');
+    setTimeout(() => advisorToast.classList.remove('show'), 4000);
+  });
+
+  function updateAdvisorBadge() {
+    let pending = 0;
+    for (const { data } of suggestionMap.values()) {
+      if (data.status === 'pending') pending++;
+    }
+    advisorBadge.textContent = pending;
+    advisorPanel.classList.toggle('visible', suggestionMap.size > 0);
+  }
+
+  function simpleDiff(oldText, newText) {
+    const oldLines = (oldText || '').split('\n');
+    const newLines = (newText || '').split('\n');
+    // Simple LCS-based diff
+    const m = oldLines.length, n = newLines.length;
+    // For performance, use a simplified approach for large files
+    if (m + n > 2000) {
+      return '<div class="diff-header">File too large for inline diff — showing proposed version</div>' +
+        newLines.map(l => `<div class="diff-line diff-line-add">+ ${escapeHtml(l)}</div>`).join('');
+    }
+    // Build LCS table
+    const dp = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        dp[i][j] = oldLines[i-1] === newLines[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
+      }
+    }
+    // Backtrack to build diff
+    const result = [];
+    let i = m, j = n;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && oldLines[i-1] === newLines[j-1]) {
+        result.unshift({ type: 'context', text: oldLines[i-1] });
+        i--; j--;
+      } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+        result.unshift({ type: 'add', text: newLines[j-1] });
+        j--;
+      } else {
+        result.unshift({ type: 'remove', text: oldLines[i-1] });
+        i--;
+      }
+    }
+    return '<div class="diff-header">Changes</div>' +
+      result.map(r => {
+        const prefix = r.type === 'add' ? '+ ' : r.type === 'remove' ? '- ' : '  ';
+        return `<div class="diff-line diff-line-${r.type}">${escapeHtml(prefix + r.text)}</div>`;
+      }).join('');
+  }
+
+  function renderSuggestionCard(data) {
+    const card = document.createElement('div');
+    card.className = `suggestion-card ${data.type} ${data.status}`;
+    const typeLabel = data.type === 'new-agent' ? 'New' : 'Improve';
+    const statusLabel = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+
+    card.innerHTML = `
+      <div class="suggestion-header">
+        <span class="suggestion-type-badge ${data.type}">${typeLabel}</span>
+        <span class="suggestion-title">${escapeHtml(data.title)}</span>
+        <span class="suggestion-status-label ${data.status}">${statusLabel}</span>
+      </div>
+      <div class="suggestion-summary">${escapeHtml(data.summary)}</div>
+      <div class="suggestion-actions">
+        <button class="btn-details">View Details</button>
+        <button class="btn-approve" ${data.status !== 'pending' ? 'disabled' : ''}>Approve</button>
+        <button class="btn-dismiss" ${data.status !== 'pending' ? 'disabled' : ''}>Dismiss</button>
+      </div>
+      <div class="suggestion-detail"></div>
+    `;
+
+    const detailEl = card.querySelector('.suggestion-detail');
+    const detailBtn = card.querySelector('.btn-details');
+    const approveBtn = card.querySelector('.btn-approve');
+    const dismissBtn = card.querySelector('.btn-dismiss');
+
+    detailBtn.addEventListener('click', () => {
+      const isVisible = detailEl.classList.contains('visible');
+      detailEl.classList.toggle('visible');
+      detailBtn.textContent = isVisible ? 'View Details' : 'Hide Details';
+      if (!isVisible && !detailEl.dataset.rendered) {
+        detailEl.dataset.rendered = 'true';
+        if (data.type === 'improve-agent' && data.existingFile) {
+          detailEl.innerHTML = simpleDiff(data.existingFile.content, data.proposedFile.content);
+        } else {
+          detailEl.innerHTML = `<pre>${escapeHtml(data.proposedFile.content)}</pre>`;
+        }
+      }
+    });
+
+    approveBtn.addEventListener('click', async () => {
+      approveBtn.disabled = true;
+      dismissBtn.disabled = true;
+      approveBtn.textContent = 'Approving...';
+      try {
+        const res = await fetch('/api/advisor/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: data.id }),
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          approveBtn.textContent = 'Error';
+          approveBtn.title = result.error || 'Unknown error';
+          dismissBtn.disabled = false;
+        }
+        // UI update happens via WebSocket advisor-update
+      } catch {
+        approveBtn.textContent = 'Error';
+        dismissBtn.disabled = false;
+      }
+    });
+
+    dismissBtn.addEventListener('click', async () => {
+      approveBtn.disabled = true;
+      dismissBtn.disabled = true;
+      try {
+        await fetch('/api/advisor/dismiss', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: data.id }),
+        });
+      } catch { /* handled via WS */ }
+    });
+
+    return card;
+  }
+
+  function addOrUpdateSuggestion(data) {
+    const existing = suggestionMap.get(data.id);
+    if (existing) {
+      // Update status in place
+      existing.data = data;
+      const card = existing.el;
+      card.className = `suggestion-card ${data.type} ${data.status}`;
+      const statusLabel = card.querySelector('.suggestion-status-label');
+      statusLabel.className = `suggestion-status-label ${data.status}`;
+      statusLabel.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+      const approveBtn = card.querySelector('.btn-approve');
+      const dismissBtn = card.querySelector('.btn-dismiss');
+      approveBtn.disabled = data.status !== 'pending';
+      dismissBtn.disabled = data.status !== 'pending';
+      if (data.status === 'approved') approveBtn.textContent = 'Approved';
+      if (data.status === 'dismissed') dismissBtn.textContent = 'Dismissed';
+    } else {
+      const el = renderSuggestionCard(data);
+      advisorBody.appendChild(el);
+      suggestionMap.set(data.id, { data, el });
+    }
+    updateAdvisorBadge();
+  }
+
+  function handleAdvisorMessage(msg) {
+    switch (msg.type) {
+      case 'advisor-suggestions': {
+        for (const s of msg.data) addOrUpdateSuggestion(s);
+        // Auto-expand if new pending suggestions
+        const hasPending = msg.data.some(s => s.status === 'pending');
+        if (hasPending) advisorPanel.classList.add('expanded');
+        break;
+      }
+      case 'advisor-update': {
+        addOrUpdateSuggestion(msg.data);
+        break;
+      }
+    }
+  }
 })();
 </script>
 </body>

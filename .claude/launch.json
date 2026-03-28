@@ -5,7 +5,8 @@
       "name": "agent-dashboard",
       "runtimeExecutable": "node",
       "runtimeArgs": ["server/server.mjs"],
-      "port": 8099
+      "port": 8099,
+      "autoPort": false
     }
   ]
 }
