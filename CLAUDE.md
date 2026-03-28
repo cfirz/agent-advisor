@@ -31,7 +31,7 @@ No build step, no npm install, no test framework. Pure vanilla JS/HTML with only
 
 **Hook-based event streaming** with three layers:
 
-1. **Hooks** (`hooks/hooks.json`) — HTTP hooks registered with Claude Code: `SubagentStart`, `SubagentStop`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `Notification`, `SessionStart`, `SessionEnd` — all POST to `localhost:8099/hooks/*`
+1. **Hooks** (`hooks/hooks.json`) — HTTP hooks registered with Claude Code: `SubagentStart`, `SubagentStop`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `Notification`, `SessionStart`, `SessionEnd` — all POST to `localhost:8099/hooks/*`. The `SessionStart` hook includes a command hook that auto-starts the server if not already running.
 
 2. **Server** (`server/server.mjs`) — Stateful HTTP+WebSocket server. Maintains an `agents` Map and a circular `activityLog` buffer (max 100). Custom RFC 6455 WebSocket frame encoder/decoder (no library). Stale detection every 5s (30s → amber warning, 90s → auto-idle). Also maintains `metrics` (persisted to `.claude/advisor-data/metrics.json`) and `suggestions` (persisted to `.claude/advisor-data/suggestions.json`).
 
@@ -77,6 +77,7 @@ Hook events → server accumulates metrics → /advisor skill fetches + analyzes
 
 **Key endpoints:**
 - `GET /api/advisor/metrics` — accumulated performance data (for the skill to fetch)
+- `GET /api/advisor/suggestions` — list pending/approved/dismissed suggestions
 - `POST /api/advisor/suggestions` — ingest suggestions from the advisor skill
 - `POST /api/advisor/approve` — write agent file to disk
 - `POST /api/advisor/dismiss` — mark dismissed

@@ -10,7 +10,7 @@ Real-time web dashboard that visualizes Claude Code agent activity. See the main
 Claude Code hooks (HTTP POST) --> Dashboard Server (port 8099) --> WebSocket/Polling --> Browser
 ```
 
-The plugin registers hooks for `SubagentStart`, `SubagentStop`, `PreToolUse`, and `PostToolUse` events. When Claude Code uses tools or spawns subagents, hook events are POSTed to the dashboard server, which pushes real-time updates to connected browsers via WebSocket (with HTTP polling fallback).
+The plugin registers hooks for nine lifecycle events — `SubagentStart`, `SubagentStop`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `Notification`, `SessionStart`, and `SessionEnd`. When Claude Code uses tools or spawns subagents, hook events are POSTed to the dashboard server, which pushes real-time updates to connected browsers via WebSocket (with HTTP polling fallback). The `SessionStart` hook also auto-starts the server if it isn't already running.
 
 The main Claude Code agent appears as **Orchestrator** in the dashboard, so you can see everything it does alongside its subagents.
 
@@ -69,6 +69,24 @@ If you prefer not to use the plugin system, add the hooks directly to your Claud
     ],
     "PostToolUse": [
       { "hooks": [{ "type": "http", "url": "http://localhost:8099/hooks/post-tool-use" }] }
+    ],
+    "PostToolUseFailure": [
+      { "hooks": [{ "type": "http", "url": "http://localhost:8099/hooks/post-tool-use-failure" }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "http", "url": "http://localhost:8099/hooks/stop" }] }
+    ],
+    "Notification": [
+      { "hooks": [{ "type": "http", "url": "http://localhost:8099/hooks/notification" }] }
+    ],
+    "SessionStart": [
+      { "hooks": [
+        { "type": "command", "command": "curl -s http://localhost:8099/api/state > /dev/null 2>&1 || node \"$CLAUDE_PROJECT_DIR/server/server.mjs\" &" },
+        { "type": "http", "url": "http://localhost:8099/hooks/session-start" }
+      ] }
+    ],
+    "SessionEnd": [
+      { "hooks": [{ "type": "http", "url": "http://localhost:8099/hooks/session-end" }] }
     ]
   }
 }
@@ -101,7 +119,11 @@ Agent cards appear automatically as Claude Code works. Each card shows:
 - **Current activity** (e.g., "Reading Scripts/Player/PlayerController.cs")
 - **Skills used** — purple tags (e.g., `commit`, `simplify`, `review-pr`)
 - **Tools used** — orange tags (e.g., `Read`, `Grep`, `Bash`, `Edit`)
+- **Token usage** — input, output, and cache read counters
+- **Error display** — errors are shown inline on the card when they occur
 - **Tool count** and time since last activity
+
+A **session summary bar** at the top tracks overall session stats: duration, total agents spawned, tokens in/out, and error count.
 
 The activity log at the bottom shows a timestamped feed of all agent events, with skill usage highlighted in purple.
 
@@ -150,26 +172,44 @@ The dashboard converts raw tool calls into human-readable descriptions:
 ## Architecture
 
 ### Server (`server/server.mjs`)
-- Zero-dependency Node.js server using built-in `http` and `crypto` modules
+- Zero-dependency Node.js server using built-in `http`, `crypto`, `fs/promises`, `path`, `url`, and `os` modules
 - Receives hook events via HTTP POST on `/hooks/*` endpoints
 - Tracks the main agent as "orchestrator" (events with no `agent_type`)
-- Maintains in-memory agent state with skills and tools arrays per agent
+- Maintains in-memory agent state with skills, tools, and token usage per agent
+- Parses JSONL transcript files to extract token counts (input, output, cache)
 - WebSocket push for real-time updates, with HTTP polling fallback (`/api/state`)
 - Stale agent detection: 30s no events = amber warning, 90s = auto-idle
 - Skills and tools are cleared when an agent returns to idle
+- Advisor system: accumulates per-agent metrics, stores suggestions, handles approve/dismiss
+- Persists advisor data (metrics + suggestions) to `.claude/advisor-data/`
 
 ### Dashboard (`ui/dashboard.html`)
 - Single HTML file with inline CSS and JavaScript
 - Dark theme (GitHub dark palette)
-- Responsive CSS grid layout for agent cards
+- Session summary bar with duration, agent count, token usage, and error count
+- Responsive CSS grid layout for agent cards with token counters
 - Skills shown as purple tags, tools as orange tags on each card
+- Agent Advisor panel with suggestion cards (approve/dismiss)
 - Dismissible idle cards with Clear button (re-appear when agent is active again)
 - WebSocket connection with automatic reconnect + HTTP polling fallback
 - Relative timestamps updated every second
 
 ### Hooks (`hooks/hooks.json`)
-- Four HTTP hooks that POST event data to `localhost:8099`
-- All hooks fail silently when the dashboard server is not running — no impact on Claude Code performance
+- Nine hooks covering the full agent lifecycle: start/stop, tool use (pre/post/failure), stop, notification, and session start/end
+- `SessionStart` includes a command hook that auto-starts the server if not already running
+- All HTTP hooks fail silently when the dashboard server is not running — no impact on Claude Code performance
+
+## Agent Advisor
+
+The dashboard includes an AI-powered advisor that analyzes subagent performance and suggests new agents or improvements to existing ones.
+
+**How it works:**
+1. Performance metrics (runs, tokens, errors, tool frequency) accumulate automatically as agents work
+2. Run `/agent-dashboard:advisor` in Claude Code to analyze metrics and generate suggestions
+3. Suggestions appear in the Advisor panel in the dashboard with approve/dismiss buttons
+4. Approving a suggestion writes the agent `.md` file to `.claude/agents/` automatically
+
+Metrics and suggestions are persisted to `.claude/advisor-data/` and survive server restarts.
 
 ## Configuration Reference
 
@@ -185,7 +225,7 @@ The dashboard converts raw tool calls into human-readable descriptions:
 ## Known Limitations
 
 - **Agent type grouping**: Multiple agents of the same type (e.g., two Explore agents) share a single card. The card shows the latest instance's status. The activity log tracks all instances individually.
-- **In-memory state**: Dashboard state resets when the server restarts. There is no persistence.
+- **In-memory agent state**: Agent cards and the activity log reset when the server restarts. Advisor metrics and suggestions are persisted to disk.
 - **No authentication**: The dashboard server has no auth. It binds to localhost only, which is fine for local development.
 - **WebSocket proxy**: Some environments (e.g., Claude Code's preview tool) don't support WebSocket upgrade. The dashboard falls back to HTTP polling in these cases.
 
@@ -218,16 +258,19 @@ claude-agent-dashboard/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin manifest (metadata, hooks, skills)
 ├── hooks/
-│   └── hooks.json               # HTTP hook definitions for 4 lifecycle events
+│   └── hooks.json               # HTTP hook definitions for 9 lifecycle events
 ├── server/
 │   └── server.mjs               # Zero-dep Node.js HTTP + WebSocket server
 ├── ui/
 │   └── dashboard.html           # Single-page dashboard (inline CSS/JS, dark theme)
 ├── skills/
-│   └── dashboard/
-│       └── SKILL.md             # /agent-dashboard:dashboard slash command
+│   ├── dashboard/
+│   │   └── SKILL.md             # /agent-dashboard:dashboard slash command
+│   └── advisor/
+│       └── SKILL.md             # /agent-dashboard:advisor slash command
 ├── install.bat                  # Windows quick-install script for hooks
 ├── marketplace.json             # Marketplace catalog for plugin distribution
+├── CLAUDE.md                    # Project guidance for Claude Code
 ├── LICENSE                      # MIT
 └── README.md                    # This file
 ```

@@ -5,7 +5,7 @@
 
 import { createServer } from 'node:http';
 import { createHash, randomBytes } from 'node:crypto';
-import { readFile, writeFile, mkdir, rename, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename, readdir, unlink } from 'node:fs/promises';
 import { join, dirname, resolve, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
@@ -144,6 +144,78 @@ async function writeAgentFile(suggestion) {
   await writeFile(tmpPath, suggestion.proposedFile.content);
   await rename(tmpPath, fullPath);
   return fullPath;
+}
+
+// --- Agent Definition CRUD helpers ---
+
+function parseAgentFile(content) {
+  const result = { frontmatter: { name: '', description: '', tools: [], model: '' }, body: '' };
+  if (!content || !content.startsWith('---')) {
+    result.body = content || '';
+    return result;
+  }
+  const secondDash = content.indexOf('---', 3);
+  if (secondDash === -1) { result.body = content; return result; }
+  const fmBlock = content.slice(3, secondDash).trim();
+  result.body = content.slice(secondDash + 3).replace(/^\n+/, '');
+  for (const line of fmBlock.split('\n')) {
+    const colon = line.indexOf(':');
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).trim();
+    const val = line.slice(colon + 1).trim();
+    if (key === 'tools') {
+      result.frontmatter.tools = val.split(',').map(t => t.trim()).filter(Boolean);
+    } else {
+      result.frontmatter[key] = val;
+    }
+  }
+  return result;
+}
+
+function buildAgentFileContent(data) {
+  const fm = [
+    '---',
+    `name: ${data.name}`,
+    `description: ${data.description || ''}`,
+    `tools: ${(data.tools || []).join(', ')}`,
+  ];
+  if (data.model) fm.push(`model: ${data.model}`);
+  fm.push('---', '');
+  return fm.join('\n') + (data.body || '');
+}
+
+async function listAgentDefinitions() {
+  try {
+    const files = await readdir(AGENTS_DIR);
+    const defs = [];
+    for (const file of files) {
+      if (!file.endsWith('.md')) continue;
+      try {
+        const content = await readFile(join(AGENTS_DIR, file), 'utf8');
+        const parsed = parseAgentFile(content);
+        const name = parsed.frontmatter.name || file.replace(/\.md$/, '');
+        // Merge with live runtime status
+        let liveStatus = 'idle';
+        for (const [, agent] of agents) {
+          if (agent.agentType === name && (agent.status === 'working' || agent.status === 'completed')) {
+            liveStatus = agent.status;
+            break;
+          }
+        }
+        defs.push({
+          fileName: file,
+          name,
+          description: parsed.frontmatter.description || '',
+          tools: parsed.frontmatter.tools || [],
+          model: parsed.frontmatter.model || '',
+          body: parsed.body,
+          liveStatus,
+        });
+      } catch { /* skip unreadable files */ }
+    }
+    defs.sort((a, b) => a.name.localeCompare(b.name));
+    return defs;
+  } catch { return []; }
 }
 
 const sessionState = {
@@ -677,7 +749,7 @@ function sendJSON(res, status, data) {
   res.writeHead(status, {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   });
   res.end(body);
@@ -688,7 +760,7 @@ const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     });
     res.end();
@@ -810,6 +882,83 @@ const server = createServer(async (req, res) => {
     broadcast({ type: 'advisor-update', data: { ...suggestion } });
     pushLog('advisor', `Dismissed: ${suggestion.title}`);
     sendJSON(res, 200, { ok: true });
+    return;
+  }
+
+  // Agent CRUD endpoints
+  const agentMatch = path.match(/^\/api\/agents\/([a-zA-Z0-9_-]+)$/);
+
+  if (req.method === 'GET' && path === '/api/agents') {
+    const defs = await listAgentDefinitions();
+    // Also merge metrics for each agent
+    for (const def of defs) {
+      def.metrics = metrics.agentTypes[def.name] || null;
+    }
+    sendJSON(res, 200, defs);
+    return;
+  }
+
+  if (req.method === 'GET' && agentMatch) {
+    const name = agentMatch[1];
+    const filePath = join(AGENTS_DIR, `${name}.md`);
+    if (!validateAgentPath(filePath)) { sendJSON(res, 400, { error: 'Invalid agent name' }); return; }
+    try {
+      const content = await readFile(filePath, 'utf8');
+      const parsed = parseAgentFile(content);
+      let liveStatus = 'idle';
+      let liveData = null;
+      for (const [, agent] of agents) {
+        if (agent.agentType === name && agent.status !== 'idle') {
+          liveStatus = agent.status;
+          liveData = { ...agent };
+          break;
+        }
+      }
+      sendJSON(res, 200, {
+        name: parsed.frontmatter.name || name,
+        description: parsed.frontmatter.description || '',
+        tools: parsed.frontmatter.tools || [],
+        model: parsed.frontmatter.model || '',
+        body: parsed.body,
+        liveStatus,
+        liveData,
+        metrics: metrics.agentTypes[name] || null,
+      });
+    } catch {
+      sendJSON(res, 404, { error: 'Agent not found' });
+    }
+    return;
+  }
+
+  if (req.method === 'PUT' && agentMatch) {
+    const name = agentMatch[1];
+    if (!/^[a-z0-9_-]+$/.test(name)) { sendJSON(res, 400, { error: 'Invalid agent name: use lowercase letters, digits, hyphens, underscores' }); return; }
+    const filePath = join(AGENTS_DIR, `${name}.md`);
+    if (!validateAgentPath(filePath)) { sendJSON(res, 400, { error: 'Invalid path' }); return; }
+    const raw = await readBody(req);
+    let body;
+    try { body = JSON.parse(raw); } catch { sendJSON(res, 400, { error: 'Invalid JSON' }); return; }
+    const content = buildAgentFileContent({ name, description: body.description, tools: body.tools, model: body.model, body: body.body });
+    await mkdir(AGENTS_DIR, { recursive: true });
+    const tmpPath = filePath + '.tmp.' + randomBytes(4).toString('hex');
+    await writeFile(tmpPath, content);
+    await rename(tmpPath, filePath);
+    broadcast({ type: 'agent-definition-changed', name });
+    sendJSON(res, 200, { ok: true, name });
+    return;
+  }
+
+  if (req.method === 'DELETE' && agentMatch) {
+    const name = agentMatch[1];
+    const filePath = join(AGENTS_DIR, `${name}.md`);
+    if (!validateAgentPath(filePath)) { sendJSON(res, 400, { error: 'Invalid path' }); return; }
+    try {
+      await unlink(filePath);
+      broadcast({ type: 'agent-definition-changed', name });
+      sendJSON(res, 200, { ok: true, deleted: name });
+    } catch {
+      sendJSON(res, 404, { error: 'Agent not found' });
+    }
     return;
   }
 
