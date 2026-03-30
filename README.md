@@ -53,11 +53,17 @@ The script merges the required hooks into your global `~/.claude/settings.json`.
 
 If you prefer not to use the plugin system, add the hooks directly to your Claude Code settings.
 
-**Global** (`~/.claude/settings.json`) or **project** (`.claude/settings.json`):
+**Global** (`~/.claude/settings.json`) — tracks all projects. Replace `/path/to/agent-advisor` with the absolute path where you cloned this repo:
 
 ```json
 {
   "hooks": {
+    "SessionStart": [
+      { "hooks": [
+        { "type": "command", "command": "curl -s http://localhost:8099/api/state > /dev/null 2>&1 || node \"/path/to/agent-advisor/server/server.mjs\" &" },
+        { "type": "http", "url": "http://localhost:8099/hooks/session-start" }
+      ] }
+    ],
     "SubagentStart": [
       { "hooks": [{ "type": "http", "url": "http://localhost:8099/hooks/subagent-start" }] }
     ],
@@ -79,18 +85,14 @@ If you prefer not to use the plugin system, add the hooks directly to your Claud
     "Notification": [
       { "hooks": [{ "type": "http", "url": "http://localhost:8099/hooks/notification" }] }
     ],
-    "SessionStart": [
-      { "hooks": [
-        { "type": "command", "command": "curl -s http://localhost:8099/api/state > /dev/null 2>&1 || node \"$CLAUDE_PROJECT_DIR/server/server.mjs\" &" },
-        { "type": "http", "url": "http://localhost:8099/hooks/session-start" }
-      ] }
-    ],
     "SessionEnd": [
       { "hooks": [{ "type": "http", "url": "http://localhost:8099/hooks/session-end" }] }
     ]
   }
 }
 ```
+
+> **Important:** The `SessionStart` command must use the **absolute path** to `server.mjs`. Using `$CLAUDE_PROJECT_DIR` only works correctly when Claude Code is opened from inside the agent-advisor directory itself — it resolves to the current project's directory, not agent-advisor's. The `install.bat` script handles this automatically.
 
 > If you already have hooks in your settings, merge these entries into the existing `hooks` object. Multiple hook entries for the same event are supported.
 
@@ -133,11 +135,11 @@ When an agent finishes and transitions to idle, a **Clear** button appears on it
 
 ## Important: Hook Timing
 
-Hooks must be registered **before starting** your Claude Code session (or before spawning agents). If you add hooks to `settings.json` mid-session, only agents spawned after that point will be tracked. For best results:
+Hooks must be registered **before starting** your Claude Code session (or before spawning agents). If you add hooks to `settings.json` mid-session, only agents spawned after that point will be tracked. **After installing or changing hooks, restart Claude Code** for the new settings to take effect. For best results:
 
 1. Install the plugin or add hooks to settings
-2. **Then** start a new `claude` session
-3. Start the dashboard server
+2. **Restart Claude Code**
+3. Start the dashboard server (or let `SessionStart` auto-start it)
 4. Work normally — all agents will be tracked
 
 ## Agent Status Types
@@ -246,6 +248,10 @@ Metrics and suggestions are persisted to `.claude/advisor-data/` and survive ser
   taskkill /PID <pid> /F
   ```
 - Or use a different port: `PORT=9000 node server/server.mjs`
+
+**Dashboard only shows activity from the agent-advisor project, not other projects**
+- The global `~/.claude/settings.json` may be missing the `SessionStart` hook or using `$CLAUDE_PROJECT_DIR` in the auto-start command. Re-run `install.bat` (Windows) or manually add the `SessionStart` hook with an absolute path to `server.mjs` as shown in Option D above.
+- Restart Claude Code after updating hooks.
 
 **Agent cards stuck on "Working"**
 - The stale detection will mark them "Stale?" after 30s and auto-idle after 90s.

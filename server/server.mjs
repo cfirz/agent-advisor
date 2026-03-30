@@ -1177,6 +1177,18 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // register-project: lightweight pre-registration from command hook using $CLAUDE_PROJECT_DIR.
+    // Called before the HTTP session-start hook so the project exists even if the HTTP body
+    // omits cwd, and so subsequent SubagentStart hooks can be attributed to the right project.
+    if (hook === 'register-project') {
+      if (body.cwd) {
+        const proj = await getOrCreateProject(body.cwd);
+        if (proj && body.session_id) sessionToProject.set(body.session_id, proj.cwd);
+      }
+      sendJSON(res, 200, { ok: true });
+      return;
+    }
+
     // All other hooks: resolve project from session_id or body
     const proj = resolveProject(body);
     if (!proj) {
