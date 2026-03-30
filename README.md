@@ -100,6 +100,14 @@ If you prefer not to use the plugin system, add the hooks directly to your Claud
 
 ### 1. Start the dashboard server
 
+**Windows (recommended):** Run `start.bat` from the repo root. It kills any existing server on port 8099 and starts a fresh one:
+
+```bat
+start.bat
+```
+
+**Manual:**
+
 ```bash
 node /path/to/agent-advisor/server/server.mjs
 ```
@@ -239,7 +247,8 @@ Metrics and suggestions are persisted to `.claude/advisor-data/` and survive ser
 - Verify the dashboard server is running: `curl http://localhost:8099/api/state`
 
 **Port 8099 is already in use**
-- Another instance may be running. Find and kill it:
+- On Windows, just run `start.bat` — it kills the existing process and restarts cleanly.
+- Manual kill:
   ```bash
   # Linux/Mac
   lsof -ti:8099 | xargs kill
@@ -275,11 +284,77 @@ agent-advisor/
 │   └── advisor/
 │       └── SKILL.md             # /agent-advisor:advisor slash command
 ├── install.bat                  # Windows quick-install script for hooks
+├── start.bat                    # Windows script to start (or restart) the server
 ├── marketplace.json             # Marketplace catalog for plugin distribution
 ├── CLAUDE.md                    # Project guidance for Claude Code
 ├── LICENSE                      # MIT
 └── README.md                    # This file
 ```
+
+## Contributing
+
+Contributions are welcome. The project has no build step and zero dependencies — all you need is Node.js.
+
+### Getting Started
+
+```bash
+git clone https://github.com/cfirz/agent-advisor.git
+cd agent-advisor
+
+# Install hooks into your own Claude Code settings
+install.bat        # Windows
+# or manually merge hooks/hooks.json into ~/.claude/settings.json
+
+# Start the server
+start.bat          # Windows
+# or: node server/server.mjs
+
+# Open the dashboard
+# http://localhost:8099
+```
+
+### Project Conventions
+
+- **No dependencies.** The server uses only Node.js built-ins (`http`, `crypto`, `fs/promises`, `path`, `url`, `os`). Don't add `package.json` or `node_modules`.
+- **No build step.** The UI is a single self-contained `ui/dashboard.html` with inline CSS and JS. Keep it that way.
+- **Server changes** go in `server/server.mjs`. To add human-readable descriptions for new tools, extend the `describeActivity()` function.
+- **UI changes** go in `ui/dashboard.html`. Test with both WebSocket (normal) and polling fallback (disconnect WS to verify).
+- **Hook changes** go in `hooks/hooks.json` and must be reflected in `install.bat` and the Manual Hook Setup section of this README.
+
+### Submitting a Pull Request
+
+1. **Fork** the repo and create a feature branch from `main`:
+   ```bash
+   git checkout -b feat/your-feature-name
+   ```
+
+2. **Make your changes.** Keep commits focused — one logical change per commit.
+
+3. **Test manually** before opening a PR:
+   - Start the server (`start.bat` or `node server/server.mjs`)
+   - Open the dashboard at `http://localhost:8099`
+   - Run a Claude Code session with agents and verify your change behaves correctly
+   - Check the browser console for errors
+
+4. **Open a PR** against the `main` branch. In the PR description include:
+   - What the change does and why
+   - How you tested it
+   - Screenshots or screen recordings for UI changes
+
+### Good First Contributions
+
+- New tool descriptions in `describeActivity()` (e.g., for MCP tools you use)
+- UI improvements to the dashboard (agent cards, activity log, advisor panel)
+- Linux/macOS install script (`install.sh`) equivalent to `install.bat`
+- Additional hook event support
+
+### Reporting Bugs
+
+Open an issue at [github.com/cfirz/agent-advisor/issues](https://github.com/cfirz/agent-advisor/issues) with:
+- What you expected vs. what happened
+- Output of `curl http://localhost:8099/api/state`
+- Your Node.js version (`node --version`)
+- Relevant hook config from `~/.claude/settings.json`
 
 ## License
 
