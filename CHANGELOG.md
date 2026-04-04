@@ -4,13 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.2.0] - 2026-04-04
 
 ### Added
 
+- Project tabs now display a close button (visible on hover) that removes the project from the dashboard and server state via a new `DELETE /api/projects` endpoint.
+- `isTempProject()` filter on the server suppresses internal and temporary projects (`.paperclip/instances/` paths, UUID-prefixed names, and `_default`) from the project tabs list.
 - `privacy-policy.html` — self-contained privacy policy page for GitHub Pages, styled to match the dashboard dark theme. Confirms no data collection, all-local operation, and MIT license.
 - Author URL field in `.claude-plugin/plugin.json`.
 - Versioning & release tagging guidelines in `CLAUDE.md`.
+
+### Changed
+
+- Project tabs moved from the sidebar into the main content area, sitting above the page content where breadcrumbs previously appeared.
+- Project tab background now uses `var(--bg-surface)` instead of `var(--sidebar-bg)` to match the main area.
+
+### Removed
+
+- Breadcrumb navigation bar removed from the main content area. Navigation context is now provided by the sidebar active state alone.
 
 ## [1.1.0] - 2026-04-04
 

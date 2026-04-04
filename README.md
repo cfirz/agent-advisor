@@ -206,10 +206,13 @@ The dashboard converts raw tool calls into human-readable descriptions:
 - Skills and tools are cleared when an agent returns to idle
 - Advisor system: accumulates per-agent metrics, stores suggestions, handles approve/dismiss
 - Persists advisor data (metrics + suggestions) to `.claude/advisor-data/`
+- Filters temporary and internal projects (`.paperclip/instances/` paths, UUID-prefixed names, `_default`) from the projects list
+- `DELETE /api/projects` endpoint removes a project from server state and persists the change
 
 ### Dashboard (`ui/dashboard.html`)
 - Single HTML file with inline CSS and JavaScript
 - Dark theme (GitHub dark palette)
+- Project tabs bar above the page content — click to switch projects, hover to reveal a close button that removes the project from the dashboard
 - Session summary bar with duration, agent count, token usage, and error count
 - Responsive CSS grid layout for agent cards with token counters
 - Skills shown as purple tags, tools as orange tags on each card
@@ -303,6 +306,7 @@ agent-advisor/
 ├── start.bat                    # Windows script to start (or restart) the server
 ├── stop_server.bat              # Windows script to stop the server
 ├── marketplace.json             # Marketplace catalog for plugin distribution
+├── privacy-policy.html          # Hosted privacy policy for GitHub Pages
 ├── CLAUDE.md                    # Project guidance for Claude Code
 ├── LICENSE                      # MIT
 └── README.md                    # This file

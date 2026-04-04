@@ -404,9 +404,19 @@ function resolveProject(body) {
   return null;
 }
 
+const TEMP_PROJECT_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-/;
+
+function isTempProject(cwd, name) {
+  if (cwd.includes('.paperclip/instances/')) return true;
+  if (TEMP_PROJECT_RE.test(name)) return true;
+  if (name === '_default') return true;
+  return false;
+}
+
 function getProjectsList() {
   const list = [];
   for (const [cwd, proj] of projects) {
+    if (isTempProject(cwd, proj.name)) continue;
     let hasActiveSession = false;
     for (const [, pCwd] of sessionToProject) {
       if (pCwd === cwd) { hasActiveSession = true; break; }
@@ -942,6 +952,22 @@ const server = createServer(async (req, res) => {
   // API: list projects
   if (req.method === 'GET' && path === '/api/projects') {
     sendJSON(res, 200, getProjectsList());
+    return;
+  }
+
+  // API: delete a project
+  if (req.method === 'DELETE' && path === '/api/projects') {
+    const raw = await readBody(req);
+    let body; try { body = JSON.parse(raw); } catch { body = {}; }
+    const id = body && body.id;
+    if (!id || !projects.has(id)) { sendJSON(res, 404, { error: 'Project not found' }); return; }
+    projects.delete(id);
+    for (const [sid, pCwd] of sessionToProject) {
+      if (pCwd === id) sessionToProject.delete(sid);
+    }
+    await saveProjectsRegistry();
+    broadcastGlobal({ type: 'projects-update', data: getProjectsList() });
+    sendJSON(res, 200, { ok: true });
     return;
   }
 
