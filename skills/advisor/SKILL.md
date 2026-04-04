@@ -18,6 +18,26 @@ Fetch accumulated metrics from the dashboard server. Use the current working dir
 curl -s "http://localhost:8099/api/advisor/metrics?project=$(pwd)"
 ```
 
+You can also fetch session-specific metrics by adding a session filter:
+
+```bash
+curl -s "http://localhost:8099/api/advisor/metrics?project=$(pwd)&session=SESSION_ID"
+```
+
+To get a list of all sessions (for trend analysis across sessions):
+
+```bash
+curl -s "http://localhost:8099/api/sessions?project=$(pwd)"
+```
+
+This returns `[{sessionId, startTime, endTime, duration, status, agentCount, totalErrors, totalTokens}]` sorted most-recent-first. Use this to identify recent sessions and compare metrics across them.
+
+For full detail on a specific session (agents, activity log, per-agent breakdown):
+
+```bash
+curl -s "http://localhost:8099/api/sessions/SESSION_ID?project=$(pwd)"
+```
+
 If the server is not running, tell the user to start it first with `/agent-dashboard`.
 
 ### Step 2: Read Existing Agents
@@ -52,6 +72,13 @@ Suggest improvements to an existing agent when:
 - Agent declares tools it has never used across all recorded runs — suggest removing them
 - Token usage is very high relative to tool count — suggest a cheaper model or tighter prompt
 - Agent consistently spawns with the same patterns — suggest prompt refinements
+
+#### Cross-Session Analysis
+
+When session history is available, also look for:
+- Performance trends across sessions (improving/degrading error rates, token usage)
+- Agents that perform differently in specific sessions (outliers)
+- Sessions where certain agent types were notably absent (missed opportunities)
 
 ### Step 5: Format and Submit
 

@@ -206,13 +206,20 @@ The dashboard converts raw tool calls into human-readable descriptions:
 - Skills and tools are cleared when an agent returns to idle
 - Advisor system: accumulates per-agent metrics, stores suggestions, handles approve/dismiss
 - Persists advisor data (metrics + suggestions) to `.claude/advisor-data/`
+- **Session archival**: sessions are snapshotted on `SessionEnd` and stored in `.claude/advisor-data/sessions.json` (max 50 per project); each record includes agents, activity log, and per-agent-type metrics breakdown
 - Filters temporary and internal projects (`.paperclip/instances/` paths, UUID-prefixed names, `_default`) from the projects list
 - `DELETE /api/projects` endpoint removes a project from server state and persists the change
+- `GET /api/sessions` — list all sessions (archived + active) for a project, sorted most-recent-first
+- `GET /api/sessions/:id` — full detail for one session: agents snapshot, activity log, metrics breakdown
+- `GET /api/advisor/metrics?session=SESSION_ID` — filters metrics to runs from a specific session
 
 ### Dashboard (`ui/dashboard.html`)
 - Single HTML file with inline CSS and JavaScript
 - Light/dark/auto theme toggle in the sidebar — "Auto" follows OS `prefers-color-scheme`; preference persists in `localStorage`
 - Project tabs bar above the page content — click to switch projects, hover to reveal a close button that removes the project from the dashboard
+- **Sessions list page** (`#/sessions`) — table of all recorded sessions with date, duration, agent count, tokens, and errors; updates in real time via `session-archived` WebSocket message
+- **Session detail page** (`#/sessions/:id`) — three tabs: Agents (card grid), Activity (filtered log), Metrics (totals + per-agent breakdown table); works for both live and archived sessions
+- **Session selector dropdown** on the main dashboard — switch between the live session and any historical session without leaving the page
 - Session summary bar with duration, agent count, token usage, and error count
 - Responsive CSS grid layout for agent cards with token counters
 - Skills shown as purple tags, tools as orange tags on each card
@@ -236,6 +243,8 @@ The dashboard includes an AI-powered advisor that analyzes subagent performance 
 3. Suggestions appear in the Advisor panel in the dashboard with approve/dismiss buttons
 4. Approving a suggestion writes the agent `.md` file to `.claude/agents/` automatically
 
+The advisor skill can also perform cross-session analysis: it fetches session history via `GET /api/sessions`, compares trends across sessions (error rates, token usage, agent utilization), and incorporates those trends into its suggestions.
+
 Metrics and suggestions are persisted to `.claude/advisor-data/` and survive server restarts.
 
 ## Configuration Reference
@@ -252,7 +261,7 @@ Metrics and suggestions are persisted to `.claude/advisor-data/` and survive ser
 ## Known Limitations
 
 - **Agent type grouping**: Multiple agents of the same type (e.g., two Explore agents) share a single card. The card shows the latest instance's status. The activity log tracks all instances individually.
-- **In-memory agent state**: Agent cards and the activity log reset when the server restarts. Advisor metrics and suggestions are persisted to disk.
+- **In-memory agent state**: Agent cards and the current activity log reset when the server restarts. Advisor metrics, suggestions, and archived session history are persisted to disk and reloaded on restart.
 - **No authentication**: The dashboard server has no auth. It binds to localhost only, which is fine for local development.
 - **WebSocket proxy**: Some environments (e.g., Claude Code's preview tool) don't support WebSocket upgrade. The dashboard falls back to HTTP polling in these cases.
 

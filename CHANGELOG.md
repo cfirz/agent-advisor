@@ -13,6 +13,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - All dashboard colors converted from hardcoded values to CSS custom properties, enabling correct theme switching across every component.
 - Light theme uses a warm off-white palette (`#f5f5f7` base, `#ffffff` surface) for comfortable daytime use.
 
+## [1.3.0] - 2026-04-04
+
+### Added
+
+- **Session history** — sessions are automatically archived when they end and persisted to `.claude/advisor-data/sessions.json` (up to 50 sessions per project).
+- **Sessions list page** (`#/sessions`) — new sidebar nav item shows a table of all recorded sessions with date, duration, agent count, token usage, and error count, sorted most-recent-first.
+- **Session detail page** (`#/sessions/:id`) — three-tab view for any archived or active session:
+  - *Agents* — card grid snapshot of agent states for that session
+  - *Activity* — filtered activity log for that session
+  - *Metrics* — token and error totals plus a per-agent-type breakdown table
+- **Session selector on the dashboard page** — dropdown in the session stats bar lets you switch between the live current session and any historical session without leaving the dashboard.
+- **Session filter on the agent detail runs tab** — runs table now includes a Session column with links and a dropdown to filter runs by session.
+- **`GET /api/sessions`** — returns all archived and active sessions for a project, sorted most-recent-first.
+- **`GET /api/sessions/:id`** — returns full detail for one session: agents, activity log, and metrics breakdown.
+- **`GET /api/advisor/metrics?session=SESSION_ID`** — filters accumulated metrics to runs from a specific session, enabling per-session advisor analysis.
+- **`session-archived` WebSocket message** — broadcast when a session ends so the Sessions list page updates in real time without polling.
+- **`sessionCount`** field added to the `full-state` payload so the UI can show how many sessions have been recorded.
+- **Cross-session analysis** added to the `/agent-advisor:advisor` skill — the skill now fetches session history and compares trends across sessions when generating suggestions.
+
+### Fixed
+
+- `sessionId` is now cleared in server state when a session ends, preventing stale session IDs from being carried into the next session and creating phantom "active" entries in the sessions list.
+
 ## [1.2.1] - 2026-04-04
 
 ### Changed

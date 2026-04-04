@@ -1,6 +1,6 @@
 {
   "name": "agent-advisor",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Real-time dashboard showing Claude Code subagent status and activity",
   "author": { "name": "Cfir Zioni", "url": "https://github.com/cfirz/agent-advisor" },
   "repository": "https://github.com/cfirz/agent-advisor",

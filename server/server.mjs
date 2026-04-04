@@ -853,6 +853,9 @@ function handleSessionEnd(proj, body) {
       proj.broadcast({ type: 'agent-update', agent: key, data: { ...agent } });
     }
   }
+  // Clear session ID so it's not reported as "active" after ending
+  proj.sessionState.sessionId = null;
+  proj.broadcast({ type: 'session-update', data: { ...proj.sessionState } });
   // Flush metrics and suggestions on session end
   proj.saveMetricsDebounced();
   proj.saveSuggestionsDebounced();
