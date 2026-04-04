@@ -517,6 +517,78 @@
   .agent-list-tools { font-size: 12px; color: var(--text-tertiary); min-width: 60px; }
   .agent-list-desc { font-size: 13px; color: var(--text-secondary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* --- Session List --- */
+  .session-list { display:flex; flex-direction:column; gap:2px; }
+  .session-row {
+    display:flex; align-items:center; gap:12px; padding:10px 14px;
+    background:var(--bg-surface); border:1px solid var(--border-subtle);
+    border-radius:var(--radius-sm); cursor:pointer; transition:background 0.15s, border-color 0.15s;
+  }
+  .session-row:hover { background:var(--bg-surface-hover); border-color:var(--border-default); }
+  .session-row.active { border-left:3px solid var(--status-active); }
+  .session-row .session-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .session-row .session-dot.active { background:var(--status-active); animation:pulse 1.5s infinite; }
+  .session-row .session-dot.ended { background:var(--status-idle); }
+  .session-row .session-date { color:var(--text-primary); font-size:13px; min-width:140px; }
+  .session-row .session-duration { color:var(--text-secondary); font-size:12px; min-width:70px; font-family:var(--mono-font); }
+  .session-row .session-agents { color:var(--text-secondary); font-size:12px; min-width:70px; }
+  .session-row .session-tokens { color:var(--text-secondary); font-size:12px; min-width:100px; font-family:var(--mono-font); }
+  .session-row .session-errors { font-size:12px; min-width:50px; }
+  .session-row .session-errors.has-errors { color:var(--status-error); }
+  .session-row .session-errors.no-errors { color:var(--text-tertiary); }
+  .session-row .session-id { color:var(--text-tertiary); font-size:11px; font-family:var(--mono-font); margin-left:auto; }
+
+  /* --- Session Detail --- */
+  .session-meta-bar {
+    display:flex; align-items:center; gap:16px; padding:10px 16px;
+    background:var(--bg-surface); border:1px solid var(--border-subtle);
+    border-radius:var(--radius-sm); margin-bottom:16px; flex-wrap:wrap;
+  }
+  .session-meta-item { display:flex; flex-direction:column; gap:2px; }
+  .session-meta-label { font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-tertiary); }
+  .session-meta-value { font-size:13px; color:var(--text-primary); }
+  .session-meta-value.tokens { font-family:var(--mono-font); color:var(--accent); }
+  .session-meta-value.errors { color:var(--status-error); }
+  .session-meta-value.no-errors { color:var(--text-tertiary); }
+  .session-meta-divider { width:1px; height:28px; background:var(--border-subtle); }
+
+  .session-status-badge { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500; }
+  .session-status-badge.active { background:var(--status-active-bg); color:var(--status-active); border:1px solid var(--status-active); }
+  .session-status-badge.ended { background:var(--bg-overlay); color:var(--text-tertiary); border:1px solid var(--border-subtle); }
+
+  .session-back-btn {
+    display:inline-flex; align-items:center; gap:4px; color:var(--text-secondary);
+    font-size:12px; cursor:pointer; padding:4px 8px; border-radius:var(--radius-sm);
+    border:none; background:none; transition:color 0.15s;
+  }
+  .session-back-btn:hover { color:var(--text-primary); }
+
+  /* --- Session Selector (used on dashboard and agent detail) --- */
+  .session-select {
+    padding:4px 8px; background:var(--bg-surface); color:var(--text-secondary);
+    border:1px solid var(--border-subtle); border-radius:var(--radius-sm);
+    font-size:12px; cursor:pointer; max-width:220px;
+  }
+  .session-select:focus { border-color:var(--accent); outline:none; }
+
+  .session-view-banner {
+    display:flex; align-items:center; gap:8px; padding:8px 12px; margin-bottom:12px;
+    background:var(--accent-bg); border:1px solid var(--accent-subtle); border-radius:var(--radius-sm);
+    color:var(--accent); font-size:12px;
+  }
+  .session-view-banner a { color:var(--accent); cursor:pointer; text-decoration:underline; }
+
+  /* --- Metrics Breakdown Table --- */
+  .breakdown-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .breakdown-table th {
+    text-align:left; padding:8px 10px; color:var(--text-tertiary); font-weight:500;
+    text-transform:uppercase; font-size:10px; letter-spacing:0.05em;
+    border-bottom:1px solid var(--border-subtle);
+  }
+  .breakdown-table td { padding:8px 10px; color:var(--text-secondary); border-bottom:1px solid var(--border-subtle); }
+  .breakdown-table td.mono { font-family:var(--mono-font); }
+  .breakdown-table tr:hover td { background:var(--bg-surface-hover); }
+
   /* --- Agent Detail --- */
   .detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 4px; flex-wrap: wrap; }
   .detail-name { font-size: 22px; font-weight: 700; }
@@ -774,6 +846,14 @@
       <div class="nav-item" data-route="#/activity">
         <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="14" height="2" rx="1"/><rect x="1" y="7" width="10" height="2" rx="1"/><rect x="1" y="12" width="12" height="2" rx="1"/></svg>
         Activity
+      </div>
+      <div class="nav-item" data-route="#/sessions">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="2" y="1" width="12" height="3" rx="1"/>
+          <rect x="2" y="6.5" width="12" height="3" rx="1"/>
+          <rect x="2" y="12" width="12" height="3" rx="1"/>
+        </svg>
+        Sessions
       </div>
       <div class="nav-section">
         Agents
@@ -1187,6 +1267,11 @@
       renderDashboardPage();
     } else if (hash === '#/activity') {
       renderActivityPage();
+    } else if (hash === '#/sessions') {
+      renderSessionsListPage();
+    } else if (hash.startsWith('#/sessions/')) {
+      const sid = decodeURIComponent(hash.replace('#/sessions/', ''));
+      renderSessionDetailPage(sid);
     } else if (hash === '#/agents') {
       renderAgentsListPage();
     } else if (hash === '#/agents/new') {
@@ -1231,6 +1316,11 @@
         <div class="session-stat"><span class="s-label" data-tooltip="Text generated by the AI">Tokens Out</span><span class="s-value tokens" id="pgTokOut">0</span></div>
         <div class="session-divider"></div>
         <div class="session-stat"><span class="s-label">Errors</span><span class="s-value no-errors" id="pgErrors">0</span></div>
+        <div style="margin-left:auto">
+          <select class="session-select" id="pgSessionSelect" title="Switch session view">
+            <option value="">Current Session (Live)</option>
+          </select>
+        </div>
       </div>
       <div class="agents-grid" id="pgAgentsGrid">
         <div class="empty-state" id="pgEmpty"><h2>No active agents</h2><p>No agents are running right now. They will appear here when Claude Code starts working with subagents.</p></div>
@@ -1251,9 +1341,9 @@
     `;
 
     const pgGrid = document.getElementById('pgAgentsGrid');
-    const pgEmpty = document.getElementById('pgEmpty');
+    let pgEmpty = document.getElementById('pgEmpty');
     const pgLogContainer = document.getElementById('pgLogContainer');
-    const pgLogCount = document.getElementById('pgLogCount');
+    let pgLogCount = document.getElementById('pgLogCount');
     const pgSessionBar = document.getElementById('pgSessionBar');
     const pgDuration = document.getElementById('pgDuration');
     const pgAgentCount = document.getElementById('pgAgentCount');
@@ -1488,6 +1578,88 @@
     document.getElementById('pgAdvisorToggle').addEventListener('click', () => pgAdvisorPanel.classList.toggle('expanded'));
     document.getElementById('pgAdvisorBtn').addEventListener('click', () => { advisorToast.classList.add('show'); setTimeout(() => advisorToast.classList.remove('show'), 4000); });
 
+    // --- Session Selector ---
+    const sessionSelect = document.getElementById('pgSessionSelect');
+    let viewingHistorical = false;
+
+    async function loadSessionOptions() {
+      try {
+        const res = await fetch(apiUrl('/api/sessions'));
+        const list = await res.json();
+        const ended = list.filter(s => s.status === 'ended').slice(0, 10);
+        ended.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.sessionId;
+          const dateStr = new Date(s.startTime).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+          opt.textContent = dateStr + ' (' + (s.agentCount || 0) + ' agents)';
+          sessionSelect.appendChild(opt);
+        });
+      } catch {}
+    }
+    loadSessionOptions();
+
+    sessionSelect.addEventListener('change', async () => {
+      const sid = sessionSelect.value;
+      if (!sid) {
+        // Back to live
+        viewingHistorical = false;
+        const banner = document.getElementById('pgSessionBanner');
+        if (banner) banner.remove();
+        // Clear current cards and re-render from current project data
+        pgGrid.innerHTML = '<div class="empty-state" id="pgEmpty"><h2>No active agents</h2><p>No agents are running right now. They will appear here when Claude Code starts working with subagents.</p></div>';
+        pgEmpty = document.getElementById('pgEmpty');
+        agentCards.clear();
+        clearedAgents.clear();
+        const pd = projectDataMap.get(activeProjectId);
+        if (pd) {
+          Object.entries(pd.agentRuntimeState || {}).forEach(([k, v]) => updateCard(k, v));
+          updateSession(pd.sessionData || {});
+          // Re-render log
+          pgLogContainer.innerHTML = '<div class="log-header-inline">Activity Log <span class="log-count" id="pgLogCount">0 events</span></div>';
+          pgLogCount = document.getElementById('pgLogCount');
+          for (const e of (pd.activityLogEntries || [])) addLogEntry(e);
+        }
+        return;
+      }
+
+      // Load historical session
+      viewingHistorical = true;
+      try {
+        const res = await fetch(apiUrl('/api/sessions/' + encodeURIComponent(sid)));
+        const data = await res.json();
+
+        // Clear current cards
+        pgGrid.innerHTML = '';
+        agentCards.clear();
+        clearedAgents.clear();
+
+        // Show banner
+        let banner = document.getElementById('pgSessionBanner');
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'pgSessionBanner';
+          banner.className = 'session-view-banner';
+          pgGrid.parentElement.insertBefore(banner, pgGrid);
+        }
+        const dateStr = data.startTime ? new Date(data.startTime).toLocaleString() : '';
+        banner.innerHTML = 'Viewing session from ' + escapeHtml(dateStr) + ' &mdash; <a id="pgBackToLive">Back to live</a>';
+        document.getElementById('pgBackToLive').addEventListener('click', () => { sessionSelect.value = ''; sessionSelect.dispatchEvent(new Event('change')); });
+
+        // Render historical agents
+        Object.entries(data.agents || {}).forEach(([k, v]) => updateCard(k, v));
+
+        // Update session bar with historical data
+        if (data.metrics) {
+          updateSession({
+            startTime: data.startTime,
+            agentCount: data.metrics.agentCount,
+            totalTokens: data.metrics.totalTokens,
+            totalErrors: data.metrics.totalErrors,
+          });
+        }
+      } catch {}
+    });
+
     // Initialize with current state
     updateSession(get_sessionData());
     updateCounts();
@@ -1498,10 +1670,11 @@
     // Timer for relative timestamps
     const timer = setInterval(() => {
       for (const [,refs] of agentCards) refs.lastSeen.textContent = relativeTime(refs.lastSeenTs);
-      if (sessionStartTime) pgDuration.textContent = formatDuration(Date.now() - sessionStartTime);
+      if (sessionStartTime && !viewingHistorical) pgDuration.textContent = formatDuration(Date.now() - sessionStartTime);
     }, 1000);
 
     pageUpdateHandler = (msg) => {
+      if (viewingHistorical) return;
       switch(msg.type) {
         case 'agent-update': updateCard(msg.agent, msg.data); updateCounts(); updateSidebarAgentDots(); break;
         case 'session-update': updateSession(msg.data); updateCounts(); break;
@@ -1737,8 +1910,12 @@
         const rrEl = document.getElementById('adRecentRuns');
         const runs = (m.runs || []).slice().reverse().slice(0, 10);
         if (runs.length) {
-          rrEl.innerHTML = '<table class="runs-table"><thead><tr><th>Time</th><th>Duration</th><th>Tools</th><th>Errors</th></tr></thead><tbody>' +
-            runs.map(r => '<tr><td>' + new Date(r.timestamp).toLocaleString() + '</td><td>' + formatDuration(r.durationMs) + '</td><td>' + r.toolCount + '</td><td style="color:' + (r.errors>0?'var(--status-error)':'inherit') + '">' + r.errors + '</td></tr>').join('') + '</tbody></table>';
+          rrEl.innerHTML = '<table class="runs-table"><thead><tr><th>Time</th><th>Session</th><th>Duration</th><th>Tools</th><th>Errors</th></tr></thead><tbody>' +
+            runs.map(r => {
+              const shortSid = r.sessionId ? r.sessionId.slice(-8) : '\u2014';
+              const sidLink = r.sessionId ? '<a href="#/sessions/' + encodeURIComponent(r.sessionId) + '" style="color:var(--accent);text-decoration:none">' + shortSid + '</a>' : shortSid;
+              return '<tr><td>' + new Date(r.timestamp).toLocaleString() + '</td><td style="font-size:11px">' + sidLink + '</td><td>' + formatDuration(r.durationMs) + '</td><td>' + r.toolCount + '</td><td style="color:' + (r.errors>0?'var(--status-error)':'inherit') + '">' + r.errors + '</td></tr>';
+            }).join('') + '</tbody></table>';
         } else { rrEl.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary)">No runs recorded yet</div>'; }
       } else {
         tabOverview.innerHTML = '<div class="empty-state"><p>No metrics data yet. Run this agent to see statistics.</p></div>';
@@ -1764,15 +1941,51 @@
 
       // Runs Tab
       const tabRuns = document.getElementById('tabRuns');
-      const filtered = get_activityLogEntries().filter(e => e.agent === name);
-      if (filtered.length) {
-        tabRuns.innerHTML = '<div class="log-container" id="adRunsLog" style="max-height:none;min-height:200px;height:400px;"></div>';
-        const rl = document.getElementById('adRunsLog');
-        for (const entry of filtered) appendLogEntry(rl, entry);
-        rl.scrollTop = rl.scrollHeight;
-      } else {
-        tabRuns.innerHTML = '<div class="empty-state"><p>No activity recorded for this agent.</p></div>';
+      const allRunEntries = get_activityLogEntries().filter(e => e.agent === name);
+
+      tabRuns.innerHTML =
+        '<div style="margin-bottom:8px">' +
+          '<select class="session-select" id="pgRunsSessionFilter">' +
+            '<option value="">All Sessions</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="log-container" id="adRunsLog" style="max-height:none;min-height:200px;height:400px;"></div>';
+
+      const runsSessionFilter = document.getElementById('pgRunsSessionFilter');
+      const adRunsLog = document.getElementById('adRunsLog');
+
+      // Populate session filter dropdown
+      (async function loadRunsSessions() {
+        try {
+          const res = await fetch(apiUrl('/api/sessions'));
+          const list = await res.json();
+          list.slice(0, 20).forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.sessionId;
+            const dateStr = new Date(s.startTime).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            opt.textContent = dateStr + ' (' + (s.agentCount || 0) + ' agents)';
+            runsSessionFilter.appendChild(opt);
+          });
+        } catch {}
+      })();
+
+      function renderRunsFiltered() {
+        const sid = runsSessionFilter.value;
+        adRunsLog.innerHTML = '';
+        let entries = allRunEntries;
+        if (sid) {
+          entries = entries.filter(e => e.sessionId === sid);
+        }
+        if (entries.length) {
+          for (const entry of entries) appendLogEntry(adRunsLog, entry);
+          adRunsLog.scrollTop = adRunsLog.scrollHeight;
+        } else {
+          adRunsLog.innerHTML = '<div class="log-empty">No activity recorded' + (sid ? ' for this session' : ' for this agent') + '.</div>';
+        }
       }
+
+      runsSessionFilter.addEventListener('change', renderRunsFiltered);
+      renderRunsFiltered();
     }
 
     render();
@@ -1790,9 +2003,291 @@
       }
       if (msg.type === 'activity' && msg.data.agent === name) {
         const rl = document.getElementById('adRunsLog');
-        if (rl) { appendLogEntry(rl, msg.data); rl.scrollTop = rl.scrollHeight; }
+        const sf = document.getElementById('pgRunsSessionFilter');
+        if (rl) {
+          // Respect session filter
+          const filterSid = sf ? sf.value : '';
+          if (!filterSid || msg.data.sessionId === filterSid) {
+            const empty = rl.querySelector('.log-empty');
+            if (empty) empty.remove();
+            appendLogEntry(rl, msg.data);
+            rl.scrollTop = rl.scrollHeight;
+          }
+        }
       }
       if (msg.type === 'agent-definition-changed' && msg.name === name) render();
+    };
+  }
+
+  // ============================================================
+  // PAGE: Sessions List
+  // ============================================================
+  function renderSessionsListPage() {
+    const container = document.getElementById('pageContent');
+    container.innerHTML = `
+      <div class="page-header">
+        <h2 class="page-title">Sessions</h2>
+      </div>
+      <div id="pgSessionsList" class="session-list"></div>
+    `;
+
+    const listEl = document.getElementById('pgSessionsList');
+    let sessions = [];
+
+    async function loadSessions() {
+      try {
+        const res = await fetch(apiUrl('/api/sessions'));
+        sessions = await res.json();
+      } catch { sessions = []; }
+      renderList();
+    }
+
+    function renderList() {
+      if (!sessions.length) {
+        listEl.innerHTML = '<div class="empty-state">No sessions recorded yet</div>';
+        return;
+      }
+      listEl.innerHTML = sessions.map(s => {
+        const isActive = s.status === 'active';
+        const totalIn = (s.totalTokens?.input || 0) + (s.totalTokens?.cacheCreation || 0) + (s.totalTokens?.cacheRead || 0);
+        const totalOut = s.totalTokens?.output || 0;
+        const dateStr = s.startTime ? new Date(s.startTime).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '\u2014';
+        const durStr = s.duration ? formatDuration(s.duration) : isActive ? 'running' : '\u2014';
+        const shortId = s.sessionId ? s.sessionId.slice(-8) : '\u2014';
+        return '<div class="session-row ' + (isActive ? 'active' : '') + '" data-sid="' + escapeHtml(s.sessionId || '') + '">' +
+          '<span class="session-dot ' + (isActive ? 'active' : 'ended') + '"></span>' +
+          '<span class="session-date">' + dateStr + '</span>' +
+          '<span class="session-duration">' + durStr + '</span>' +
+          '<span class="session-agents">' + (s.agentCount || 0) + ' agents</span>' +
+          '<span class="session-tokens">' + formatTokens(totalIn) + ' in / ' + formatTokens(totalOut) + ' out</span>' +
+          '<span class="session-errors ' + ((s.totalErrors || 0) > 0 ? 'has-errors' : 'no-errors') + '">' + (s.totalErrors || 0) + ' errors</span>' +
+          '<span class="session-id">' + shortId + '</span>' +
+        '</div>';
+      }).join('');
+
+      listEl.querySelectorAll('.session-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const sid = row.dataset.sid;
+          if (sid) navigate('#/sessions/' + encodeURIComponent(sid));
+        });
+      });
+    }
+
+    loadSessions();
+
+    pageUpdateHandler = function(msg) {
+      if (msg.type === 'session-archived') {
+        sessions.unshift(msg.data);
+        renderList();
+      } else if (msg.type === 'session-update') {
+        const idx = sessions.findIndex(s => s.status === 'active');
+        if (idx >= 0) {
+          sessions[idx].agentCount = msg.data.agentCount;
+          sessions[idx].totalErrors = msg.data.totalErrors;
+          sessions[idx].totalTokens = { ...msg.data.totalTokens };
+          sessions[idx].duration = msg.data.startTime ? Date.now() - msg.data.startTime : null;
+          renderList();
+        }
+      }
+    };
+  }
+
+  // ============================================================
+  // PAGE: Session Detail
+  // ============================================================
+  function renderSessionDetailPage(sessionId) {
+    const container = document.getElementById('pageContent');
+    const shortId = sessionId ? sessionId.slice(-8) : '??';
+
+    container.innerHTML = `
+      <div class="page-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="session-back-btn" id="pgSessBack">&larr; Sessions</button>
+          <h2 class="page-title">Session <span style="font-family:var(--mono-font);font-size:14px;color:var(--text-tertiary)">${escapeHtml(shortId)}</span></h2>
+          <span class="session-status-badge" id="pgSessBadge"></span>
+        </div>
+      </div>
+      <div class="session-meta-bar" id="pgSessMeta"></div>
+      <div class="tab-bar" id="pgSessTabBar">
+        <div class="tab-item active" data-tab="agents">Agents</div>
+        <div class="tab-item" data-tab="activity">Activity</div>
+        <div class="tab-item" data-tab="metrics">Metrics</div>
+      </div>
+      <div id="pgSessTabContent"></div>
+    `;
+
+    document.getElementById('pgSessBack').addEventListener('click', () => navigate('#/sessions'));
+
+    let sessData = null;
+    let activeTab = 'agents';
+
+    // Tab switching
+    document.getElementById('pgSessTabBar').addEventListener('click', e => {
+      const tab = e.target.closest('.tab-item');
+      if (!tab) return;
+      activeTab = tab.dataset.tab;
+      document.querySelectorAll('#pgSessTabBar .tab-item').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
+      renderTab();
+    });
+
+    async function loadSession() {
+      try {
+        const res = await fetch(apiUrl('/api/sessions/' + encodeURIComponent(sessionId)));
+        if (!res.ok) throw new Error('Not found');
+        sessData = await res.json();
+      } catch {
+        document.getElementById('pgSessTabContent').innerHTML = '<div class="empty-state">Session not found</div>';
+        return;
+      }
+      renderMeta();
+      renderTab();
+    }
+
+    function renderMeta() {
+      if (!sessData) return;
+      const isActive = sessData.status === 'active';
+      const badge = document.getElementById('pgSessBadge');
+      badge.className = 'session-status-badge ' + (isActive ? 'active' : 'ended');
+      badge.textContent = isActive ? 'Active' : 'Ended';
+
+      const startStr = sessData.startTime ? new Date(sessData.startTime).toLocaleString() : '\u2014';
+      const durStr = sessData.duration ? formatDuration(sessData.duration) : isActive ? 'running' : '\u2014';
+      const tok = sessData.metrics?.totalTokens || {};
+      const totalIn = (tok.input || 0) + (tok.cacheCreation || 0) + (tok.cacheRead || 0);
+      const totalOut = tok.output || 0;
+      const errors = sessData.metrics?.totalErrors || 0;
+      const agentCount = sessData.metrics?.agentCount || 0;
+
+      document.getElementById('pgSessMeta').innerHTML =
+        '<div class="session-meta-item"><span class="session-meta-label">Started</span><span class="session-meta-value">' + startStr + '</span></div>' +
+        '<div class="session-meta-item"><span class="session-meta-label">Duration</span><span class="session-meta-value">' + durStr + '</span></div>' +
+        '<div class="session-meta-divider"></div>' +
+        '<div class="session-meta-item"><span class="session-meta-label">Agents</span><span class="session-meta-value">' + agentCount + '</span></div>' +
+        '<div class="session-meta-item"><span class="session-meta-label">Tokens In</span><span class="session-meta-value tokens">' + formatTokens(totalIn) + '</span></div>' +
+        '<div class="session-meta-item"><span class="session-meta-label">Tokens Out</span><span class="session-meta-value tokens">' + formatTokens(totalOut) + '</span></div>' +
+        '<div class="session-meta-item"><span class="session-meta-label">Errors</span><span class="session-meta-value ' + (errors > 0 ? 'errors' : 'no-errors') + '">' + errors + '</span></div>';
+    }
+
+    function renderTab() {
+      const content = document.getElementById('pgSessTabContent');
+      if (!sessData) return;
+      if (activeTab === 'agents') renderAgentsTab(content);
+      else if (activeTab === 'activity') renderActivityTab(content);
+      else if (activeTab === 'metrics') renderMetricsTab(content);
+    }
+
+    function renderAgentsTab(content) {
+      const agents = sessData.agents || {};
+      const keys = Object.keys(agents);
+      if (!keys.length) {
+        content.innerHTML = '<div class="empty-state" style="margin-top:24px">No agents in this session</div>';
+        return;
+      }
+      content.innerHTML = '<div class="agents-grid" style="margin-top:12px">' + keys.map(key => {
+        const a = agents[key];
+        const statusClass = a.status || 'idle';
+        const icon = agentIcon(a.agentType || key);
+        const name = friendlyName(a.agentType || key);
+        const activity = a.activity || '';
+        const toolCount = a.toolCount || 0;
+        const errCount = a.errors || 0;
+        const tok = a.tokens || {};
+        const totalIn = (tok.input || 0) + (tok.cacheCreation || 0) + (tok.cacheRead || 0);
+        const totalOut = tok.output || 0;
+        return '<div class="agent-card ' + statusClass + '">' +
+          '<div class="agent-header">' +
+            '<span class="agent-type-icon">' + icon + '</span>' +
+            '<span class="agent-name">' + escapeHtml(name) + '</span>' +
+            '<span class="status-label ' + statusClass + '">' + statusClass + '</span>' +
+          '</div>' +
+          '<div class="agent-activity">' + escapeHtml(activity) + '</div>' +
+          (errCount > 0 && a.lastError ? '<div class="agent-error visible">' + escapeHtml(a.lastError.tool || '') + ': ' + escapeHtml(a.lastError.message || '') + '</div>' : '') +
+          '<div class="agent-footer">' +
+            '<span>' + toolCount + ' tools</span>' +
+            '<span>' + formatTokens(totalIn) + ' in / ' + formatTokens(totalOut) + ' out</span>' +
+            (errCount > 0 ? '<span style="color:var(--status-error)">' + errCount + ' errors</span>' : '') +
+          '</div>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
+
+    function renderActivityTab(content) {
+      const log = sessData.activityLog || [];
+      if (!log.length) {
+        content.innerHTML = '<div class="empty-state" style="margin-top:24px">No activity recorded</div>';
+        return;
+      }
+      content.innerHTML = '<div class="log-section" style="margin-top:12px"><div class="log-container" style="max-height:500px;overflow-y:auto">' +
+        log.map(e => {
+          const iconCls = e.level === 'error' ? 'log-icon-error' : e.level === 'session' ? 'log-icon-session' : e.level === 'notification' ? 'log-icon-notification' : '';
+          const icon = e.level === 'error' ? '&#9888;' : e.level === 'session' ? '&#9889;' : e.level === 'notification' ? '&#128276;' : '&#9654;';
+          const msgCls = e.level === 'error' ? 'log-error' : e.level === 'session' ? 'log-session' : e.level === 'notification' ? 'log-notification' : '';
+          return '<div class="log-entry">' +
+            '<span class="log-icon ' + iconCls + '">' + icon + '</span>' +
+            '<span class="log-time">' + formatTime(e.time) + '</span>' +
+            '<span class="log-agent">' + escapeHtml(e.agent || '') + '</span>' +
+            '<span class="log-msg ' + msgCls + '">' + escapeHtml(e.message || '') + '</span>' +
+          '</div>';
+        }).join('') + '</div></div>';
+    }
+
+    function renderMetricsTab(content) {
+      const m = sessData.metrics || {};
+      const tok = m.totalTokens || {};
+      const totalIn = (tok.input || 0) + (tok.cacheCreation || 0) + (tok.cacheRead || 0);
+      const totalOut = tok.output || 0;
+      const breakdown = m.agentBreakdown || {};
+      const bdKeys = Object.keys(breakdown);
+
+      content.innerHTML =
+        '<div class="stats-grid" style="margin-top:12px">' +
+          '<div class="stat-card"><span class="stat-card-label">Agents</span><span class="stat-card-value">' + (m.agentCount || 0) + '</span></div>' +
+          '<div class="stat-card"><span class="stat-card-label">Errors</span><span class="stat-card-value" style="color:' + ((m.totalErrors || 0) > 0 ? 'var(--status-error)' : 'var(--text-secondary)') + '">' + (m.totalErrors || 0) + '</span></div>' +
+          '<div class="stat-card"><span class="stat-card-label">Tokens In</span><span class="stat-card-value" style="color:var(--accent)">' + formatTokens(totalIn) + '</span></div>' +
+          '<div class="stat-card"><span class="stat-card-label">Tokens Out</span><span class="stat-card-value" style="color:var(--accent)">' + formatTokens(totalOut) + '</span></div>' +
+        '</div>' +
+        (bdKeys.length ?
+          '<h3 style="margin:20px 0 8px;font-size:14px;color:var(--text-secondary)">Agent Breakdown</h3>' +
+          '<table class="breakdown-table">' +
+            '<thead><tr><th>Agent</th><th>Runs</th><th>Tool Calls</th><th>Errors</th><th>Tokens In</th><th>Tokens Out</th></tr></thead>' +
+            '<tbody>' + bdKeys.map(at => {
+              const b = breakdown[at];
+              const bIn = (b.tokens?.input || 0) + (b.tokens?.cacheCreation || 0) + (b.tokens?.cacheRead || 0);
+              const bOut = b.tokens?.output || 0;
+              return '<tr>' +
+                '<td>' + escapeHtml(friendlyName(at)) + '</td>' +
+                '<td class="mono">' + (b.runs || 0) + '</td>' +
+                '<td class="mono">' + (b.toolCalls || 0) + '</td>' +
+                '<td class="mono" style="color:' + ((b.errors || 0) > 0 ? 'var(--status-error)' : 'inherit') + '">' + (b.errors || 0) + '</td>' +
+                '<td class="mono">' + formatTokens(bIn) + '</td>' +
+                '<td class="mono">' + formatTokens(bOut) + '</td>' +
+              '</tr>';
+            }).join('') + '</tbody>' +
+          '</table>'
+        : '');
+    }
+
+    loadSession();
+
+    // Real-time updates for active sessions
+    pageUpdateHandler = function(msg) {
+      if (!sessData || sessData.status !== 'active') return;
+      if (msg.type === 'agent-update') {
+        if (!sessData.agents) sessData.agents = {};
+        sessData.agents[msg.agent] = msg.data;
+        if (activeTab === 'agents') renderTab();
+      } else if (msg.type === 'session-update') {
+        sessData.metrics = sessData.metrics || {};
+        sessData.metrics.totalTokens = msg.data.totalTokens;
+        sessData.metrics.totalErrors = msg.data.totalErrors;
+        sessData.metrics.agentCount = msg.data.agentCount;
+        sessData.duration = msg.data.startTime ? Date.now() - msg.data.startTime : null;
+        renderMeta();
+      } else if (msg.type === 'activity') {
+        if (!sessData.activityLog) sessData.activityLog = [];
+        sessData.activityLog.push(msg.data);
+        if (activeTab === 'activity') renderTab();
+      }
     };
   }
 
@@ -2039,6 +2534,8 @@
     if (msg.type === 'agent-definition-changed') {
       if (msgProjectId === activeProjectId) refreshSidebarAgents();
     }
+    // session-archived: just forward to page handler for real-time update
+    // (no state storage needed — page handler manages its own list)
     // Only forward to page handler if this is the active project
     if (msgProjectId === activeProjectId && pageUpdateHandler) pageUpdateHandler(msg);
   }
