@@ -31,7 +31,7 @@
     --status-error-border: #7f1d1d;
     --status-idle: #71717a;
     --sidebar-bg: #0a0a0c;
-    --sidebar-width: 250px;
+    --sidebar-width: 230px;
     --mono-font: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
     --radius-sm: 6px;
     --radius-md: 10px;
@@ -107,7 +107,7 @@
   .nav-item.active .nav-icon, .nav-item:hover .nav-icon { opacity: 1; }
 
   .nav-section {
-    padding: 18px 16px 8px;
+    padding: 14px 16px 6px;
     font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
     color: var(--text-tertiary);
     display: flex; align-items: center; justify-content: space-between;
@@ -145,12 +145,12 @@
   .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
 
-  .page-content { flex: 1; overflow-y: auto; padding: 24px; }
+  .page-content { flex: 1; overflow-y: auto; padding: 20px; }
 
   /* --- Page Header --- */
   .page-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 16px; gap: 16px; flex-wrap: wrap;
   }
   .page-title { font-size: 22px; font-weight: 600; }
   .page-header-actions { display: flex; gap: 8px; }
@@ -183,16 +183,16 @@
   .stat-card-sub { font-size: 12px; color: var(--text-tertiary); }
 
   /* --- Agent Cards Grid --- */
-  .agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-bottom: 16px; }
 
   .agent-card {
     background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-    padding: 18px; display: flex; flex-direction: column; gap: 12px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    padding: 16px; display: flex; flex-direction: column; gap: 8px;
+    transition: border-color 0.2s; border-left: 3px solid var(--border-subtle);
   }
-  .agent-card.working { border-color: var(--status-active-border); box-shadow: 0 0 16px rgba(74,222,128,0.1); }
-  .agent-card.completed { border-color: #1e40af; box-shadow: 0 0 16px rgba(96,165,250,0.1); }
-  .agent-card.stale { border-color: #854d0e; opacity: 0.7; }
+  .agent-card.working { border-left-color: var(--status-active); }
+  .agent-card.completed { border-left-color: var(--status-completed); }
+  .agent-card.stale { border-left-color: var(--status-warning); opacity: 0.7; }
 
   .agent-header { display: flex; align-items: center; justify-content: space-between; }
   .agent-name { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
@@ -212,6 +212,7 @@
   .status-indicator.working { background: var(--status-active); animation: pulse 1.5s ease-in-out infinite; }
   .status-indicator.completed { background: var(--status-completed); }
   .status-indicator.stale { background: var(--status-warning); animation: pulse 2s ease-in-out infinite; }
+  .agent-card .status-indicator { display: none; }
 
   /* Legacy status-dot kept for sidebar and detail pages */
   .status-dot {
@@ -236,11 +237,7 @@
 
   .agent-header-right { display: flex; align-items: center; gap: 8px; }
 
-  .error-badge {
-    display: none; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px;
-    background: var(--status-error-bg); color: var(--status-error); border: 1px solid var(--status-error-border);
-  }
-  .error-badge.visible { display: inline-block; }
+  .error-badge { display: none !important; }
 
   .agent-activity { font-size: 13px; color: var(--text-secondary); min-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .agent-card.working .agent-activity { color: var(--text-primary); }
@@ -249,6 +246,17 @@
   .agent-error.visible { display: block; }
 
   .tag-row { display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; }
+
+  .agent-tags-summary {
+    font-size: 12px; color: var(--text-tertiary); cursor: pointer;
+    display: none; align-items: center; gap: 6px; user-select: none;
+  }
+  .agent-tags-summary:hover { color: var(--text-secondary); }
+  .agent-tags-summary.visible { display: flex; }
+  .agent-tags-summary .expand-arrow { font-size: 10px; transition: transform 0.2s; }
+  .agent-tags-summary.expanded .expand-arrow { transform: rotate(90deg); }
+  .agent-tags-detail { display: none; flex-direction: column; gap: 4px; }
+  .agent-tags-detail.visible { display: flex; }
 
   .skill-tag {
     font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 10px;
@@ -268,7 +276,9 @@
   .agent-tokens .token-label { color: var(--text-tertiary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
   .agent-tokens .token-value { font-family: var(--mono-font); color: var(--status-active); }
 
-  .agent-footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-tertiary); padding-top: 4px; border-top: 1px solid var(--border-subtle); }
+  .agent-footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-tertiary); padding-top: 6px; border-top: 1px solid var(--border-subtle); }
+  .agent-footer .footer-tokens { font-family: var(--mono-font); font-size: 11px; color: var(--text-tertiary); }
+  .agent-footer .footer-tokens .token-val { color: var(--status-active); }
   .clear-btn {
     font-size: 11px; font-weight: 500; padding: 4px 12px; border-radius: 10px;
     background: var(--bg-overlay); color: var(--text-secondary); border: 1px solid var(--border-default);
@@ -284,11 +294,11 @@
 
   /* --- Session Bar --- */
   .session-bar {
-    display: none; align-items: center; gap: 16px; padding: 8px 24px;
+    display: flex; align-items: center; gap: 16px; padding: 12px 24px;
     background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
     font-size: 11px; color: var(--text-secondary); flex-wrap: wrap; margin-bottom: 16px;
   }
-  .session-bar.active { display: flex; }
+  /* session-bar always visible now */
   .session-stat { display: flex; align-items: center; gap: 6px; }
   .session-stat .s-label { color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; font-weight: 600; }
   .session-stat .s-value { font-variant-numeric: tabular-nums; font-family: var(--mono-font); color: var(--text-primary); font-size: 13px; }
@@ -305,6 +315,12 @@
     justify-content: space-between;
   }
   .log-count { font-weight: 400; font-size: 12px; color: var(--text-tertiary); text-transform: none; letter-spacing: 0; }
+  .log-header-inline {
+    position: sticky; top: 0; z-index: 1; background: var(--bg-surface);
+    padding: 8px 14px; font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-tertiary); border-bottom: 1px solid var(--border-subtle);
+    display: flex; justify-content: space-between; align-items: center;
+  }
   .log-container {
     flex: 1; min-height: 120px; overflow-y: auto;
     background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
@@ -351,7 +367,7 @@
   /* --- Advisor Panel --- */
   .advisor-panel {
     background: var(--bg-surface); border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md); overflow: hidden; display: none; margin-bottom: 24px;
+    border-radius: var(--radius-md); overflow: hidden; display: none; margin-bottom: 16px;
   }
   .advisor-panel.visible { display: block; }
   .advisor-header-row {
@@ -366,13 +382,13 @@
   .advisor-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: var(--accent-subtle); color: var(--accent); min-width: 22px; text-align: center; }
   .advisor-toggle { font-size: 12px; color: var(--text-tertiary); transition: transform 0.2s; }
   .advisor-panel.expanded .advisor-toggle { transform: rotate(180deg); }
-  .advisor-body { display: none; padding: 12px; gap: 12px; flex-direction: column; }
+  .advisor-body { display: none; padding: 12px; gap: 8px; flex-direction: column; }
   .advisor-panel.expanded .advisor-body { display: flex; }
 
   .suggestion-card {
     background: var(--bg-base); border: 1px solid var(--border-default);
     border-left: 3px solid var(--text-tertiary); border-radius: var(--radius-sm);
-    padding: 14px; display: flex; flex-direction: column; gap: 10px;
+    padding: 12px; display: flex; flex-direction: column; gap: 8px;
     transition: opacity 0.3s;
   }
   .suggestion-card.new-agent { border-left-color: var(--accent); }
@@ -1023,11 +1039,12 @@
           <button class="btn btn-secondary" id="pgAdvisorBtn">Advisor</button>
         </div>
       </div>
-      <div class="stats-grid" id="pgStats"></div>
       <div class="session-bar" id="pgSessionBar">
         <div class="session-stat"><span class="s-label">Session</span><span class="s-value" id="pgDuration">--</span></div>
         <div class="session-divider"></div>
-        <div class="session-stat"><span class="s-label">Agents</span><span class="s-value" id="pgAgentCount">0</span></div>
+        <div class="session-stat"><span class="s-label" data-tooltip="Agent definitions in .claude/agents/">Defined</span><span class="s-value" id="pgDefined">0</span></div>
+        <div class="session-stat"><span class="s-label" data-tooltip="Agents currently working">Active</span><span class="s-value" id="pgActiveNow" style="color:var(--status-active)">0</span></div>
+        <div class="session-stat"><span class="s-label" data-tooltip="Agents started this session">Spawned</span><span class="s-value" id="pgAgentCount">0</span></div>
         <div class="session-divider"></div>
         <div class="session-stat"><span class="s-label" data-tooltip="Text processed by the AI">Tokens In</span><span class="s-value tokens" id="pgTokIn">0</span></div>
         <div class="session-stat"><span class="s-label" data-tooltip="Text generated by the AI">Tokens Out</span><span class="s-value tokens" id="pgTokOut">0</span></div>
@@ -1045,9 +1062,9 @@
         <div class="advisor-body" id="pgAdvisorBody"></div>
       </div>
       <div class="log-section">
-        <div class="log-header-bar">Activity Log <span class="log-count" id="pgLogCount">0 events</span></div>
-        <div class="log-container" id="pgLogContainer" style="max-height:260px;">
-          <div class="log-empty">No activity recorded yet. Events will appear here as agents work.</div>
+        <div class="log-container" id="pgLogContainer" style="max-height:180px;">
+          <div class="log-header-inline">Activity Log <span class="log-count" id="pgLogCount">0 events</span></div>
+          <div class="log-empty">No activity recorded yet.</div>
         </div>
       </div>
     `;
@@ -1062,34 +1079,27 @@
     const pgTokIn = document.getElementById('pgTokIn');
     const pgTokOut = document.getElementById('pgTokOut');
     const pgErrors = document.getElementById('pgErrors');
-    const pgStats = document.getElementById('pgStats');
+    const pgDefined = document.getElementById('pgDefined');
+    const pgActiveNow = document.getElementById('pgActiveNow');
     const pgAdvisorPanel = document.getElementById('pgAdvisorPanel');
     const pgAdvisorBody = document.getElementById('pgAdvisorBody');
     const pgAdvisorBadge = document.getElementById('pgAdvisorBadge');
 
-    // Stats
-    function updateStats() {
+    // Counts (replaces old stats grid)
+    function updateCounts() {
       const agentDefinitions = get_agentDefinitions();
       const agentRuntimeState = get_agentRuntimeState();
-      const sessionData = get_sessionData();
-      const defined = agentDefinitions.length;
-      let activeNow = 0, totalRuns = 0, totalErrors = 0;
+      pgDefined.textContent = agentDefinitions.length;
+      let activeNow = 0;
       for (const key in agentRuntimeState) {
         if (agentRuntimeState[key].status === 'working') activeNow++;
       }
-      totalErrors = sessionData.totalErrors || 0;
-      pgStats.innerHTML = `
-        <div class="stat-card"><div class="stat-card-label" data-tooltip="Total agent definitions in .claude/agents/">Agents Defined</div><div class="stat-card-value">${defined}</div></div>
-        <div class="stat-card"><div class="stat-card-label" data-tooltip="Agents currently working on tasks">Active Now</div><div class="stat-card-value" style="color:var(--status-active)">${activeNow}</div></div>
-        <div class="stat-card"><div class="stat-card-label" data-tooltip="Agents started in this session">Agents Spawned</div><div class="stat-card-value">${sessionData.agentCount || 0}</div></div>
-        <div class="stat-card"><div class="stat-card-label" data-tooltip="Tool failures in this session">Errors</div><div class="stat-card-value" style="color:${totalErrors > 0 ? 'var(--status-error)' : 'var(--text-tertiary)'}">${totalErrors}</div></div>
-      `;
+      pgActiveNow.textContent = activeNow;
     }
 
     // Session bar
     function updateSession(s) {
       if (!s) return;
-      if (s.startTime || s.agentCount > 0 || s.sessionId) pgSessionBar.classList.add('active');
       sessionStartTime = s.startTime;
       pgAgentCount.textContent = s.agentCount || 0;
       const t = s.totalTokens || {};
@@ -1111,22 +1121,28 @@
       card.className = 'agent-card idle';
       card.innerHTML = `
         <div class="agent-header">
-          <div class="agent-name"><div class="agent-type-icon">${agentIcon(name)}</div><div class="status-indicator idle"></div>${friendlyName(name)}<span style="color:var(--text-tertiary);font-size:12px;font-weight:400">${shortId}</span></div>
-          <div class="agent-header-right"><span class="error-badge"></span><span class="status-label idle">Idle</span><button class="clear-btn" title="Remove this card from view">Clear</button></div>
+          <div class="agent-name"><div class="agent-type-icon">${agentIcon(name)}</div>${friendlyName(name)}<span style="color:var(--text-tertiary);font-size:12px;font-weight:400">${shortId}</span></div>
+          <div class="agent-header-right"><span class="status-label idle">Idle</span><button class="clear-btn" title="Remove this card from view">Clear</button></div>
         </div>
         <div class="agent-activity"></div>
         <div class="agent-error"></div>
-        <div class="tag-row agent-skills"></div>
-        <div class="tag-row agent-tools-tags"></div>
-        <div class="agent-tokens"><span class="token-label" data-tooltip="Text processed and generated by this agent">Tokens</span><span class="token-value token-in"></span><span style="color:var(--text-tertiary)">in /</span><span class="token-value token-out"></span><span style="color:var(--text-tertiary)">out</span></div>
-        <div class="agent-footer"><span class="tool-count">0 tools</span><span class="last-seen">never</span></div>
+        <div class="agent-tags-summary"><span class="expand-arrow">&#9654;</span><span class="tags-summary-text"></span></div>
+        <div class="agent-tags-detail">
+          <div class="tag-row agent-skills"></div>
+          <div class="tag-row agent-tools-tags"></div>
+        </div>
+        <div class="agent-footer"><span class="tool-count">0 tools</span><span class="footer-tokens"></span><span class="last-seen">never</span></div>
       `;
       pgGrid.appendChild(card);
       card.querySelector('.clear-btn').addEventListener('click', () => {
         card.remove(); agentCards.delete(key); clearedAgents.add(key);
         if (agentCards.size === 0) pgEmpty.style.display = '';
       });
-      const refs = { el: card, dot: card.querySelector('.status-indicator'), label: card.querySelector('.status-label'), activity: card.querySelector('.agent-activity'), errorEl: card.querySelector('.agent-error'), errorBadge: card.querySelector('.error-badge'), skills: card.querySelector('.agent-skills'), toolTags: card.querySelector('.agent-tools-tags'), tokensRow: card.querySelector('.agent-tokens'), tokenIn: card.querySelector('.token-in'), tokenOut: card.querySelector('.token-out'), tools: card.querySelector('.tool-count'), lastSeen: card.querySelector('.last-seen'), lastSeenTs: null };
+      card.querySelector('.agent-tags-summary').addEventListener('click', function() {
+        this.classList.toggle('expanded');
+        card.querySelector('.agent-tags-detail').classList.toggle('visible');
+      });
+      const refs = { el: card, label: card.querySelector('.status-label'), activity: card.querySelector('.agent-activity'), errorEl: card.querySelector('.agent-error'), skills: card.querySelector('.agent-skills'), toolTags: card.querySelector('.agent-tools-tags'), tagsSummary: card.querySelector('.agent-tags-summary'), tagsSummaryText: card.querySelector('.tags-summary-text'), footerTokens: card.querySelector('.footer-tokens'), tools: card.querySelector('.tool-count'), lastSeen: card.querySelector('.last-seen'), lastSeenTs: null };
       agentCards.set(key, refs);
       return refs;
     }
@@ -1138,23 +1154,32 @@
       const vs = (status === 'working' && data.stale) ? 'stale' : status;
       const lt = vs === 'stale' ? 'Stale?' : status.charAt(0).toUpperCase() + status.slice(1);
       refs.el.className = 'agent-card ' + vs;
-      refs.dot.className = 'status-indicator ' + vs;
       refs.label.className = 'status-label ' + vs;
       refs.label.textContent = lt;
       refs.activity.textContent = data.stale ? (data.activity ? data.activity + ' (no new events)' : 'No recent events') : (data.activity || '');
       const errors = data.errors || 0;
-      if (errors > 0) { refs.errorBadge.textContent = errors + ' error' + (errors > 1 ? 's' : ''); refs.errorBadge.classList.add('visible'); } else { refs.errorBadge.classList.remove('visible'); }
-      if (data.lastError) { refs.errorEl.textContent = 'Failed: ' + data.lastError.tool + ' -- ' + data.lastError.message; refs.errorEl.classList.add('visible'); } else { refs.errorEl.classList.remove('visible'); }
+      if (data.lastError) {
+        const prefix = errors > 1 ? '(' + errors + ' errors) ' : '';
+        refs.errorEl.textContent = prefix + 'Failed: ' + data.lastError.tool + ' -- ' + data.lastError.message;
+        refs.errorEl.classList.add('visible');
+      } else { refs.errorEl.classList.remove('visible'); }
       const skills = data.skills || [];
       refs.skills.innerHTML = skills.map(s => '<span class="skill-tag">' + escapeHtml(s) + '</span>').join('');
       refs.skills.style.display = skills.length ? 'flex' : 'none';
       const tools = data.tools || [];
       refs.toolTags.innerHTML = tools.map(t => '<span class="tool-tag">' + escapeHtml(t) + '</span>').join('');
       refs.toolTags.style.display = tools.length ? 'flex' : 'none';
+      const skillCount = skills.length, toolTagCount = tools.length;
+      const parts = [];
+      if (skillCount > 0) parts.push(skillCount + ' skill' + (skillCount > 1 ? 's' : ''));
+      if (toolTagCount > 0) parts.push(toolTagCount + ' tool' + (toolTagCount > 1 ? 's' : ''));
+      if (parts.length > 0) { refs.tagsSummaryText.textContent = parts.join(', '); refs.tagsSummary.classList.add('visible'); }
+      else { refs.tagsSummary.classList.remove('visible'); }
       const tokens = data.tokens || {};
       const totalIn = (tokens.input||0) + (tokens.cacheCreation||0) + (tokens.cacheRead||0);
       const totalOut = tokens.output || 0;
-      if (totalIn > 0 || totalOut > 0) { refs.tokenIn.textContent = formatTokens(totalIn); refs.tokenOut.textContent = formatTokens(totalOut); refs.tokensRow.classList.add('visible'); } else { refs.tokensRow.classList.remove('visible'); }
+      if (totalIn > 0 || totalOut > 0) { refs.footerTokens.innerHTML = '<span class="token-val">' + formatTokens(totalIn) + '</span> in / <span class="token-val">' + formatTokens(totalOut) + '</span> out'; }
+      else { refs.footerTokens.textContent = ''; }
       refs.tools.textContent = (data.toolCount || 0) + ' tools';
       refs.lastSeenTs = data.lastSeen;
       refs.lastSeen.textContent = relativeTime(data.lastSeen);
@@ -1284,7 +1309,7 @@
 
     // Initialize with current state
     updateSession(get_sessionData());
-    updateStats();
+    updateCounts();
     const _ars = get_agentRuntimeState();
     for (const key in _ars) updateCard(key, _ars[key]);
     for (const entry of get_activityLogEntries()) addLogEntry(entry);
@@ -1297,8 +1322,8 @@
 
     pageUpdateHandler = (msg) => {
       switch(msg.type) {
-        case 'agent-update': updateCard(msg.agent, msg.data); updateStats(); updateSidebarAgentDots(); break;
-        case 'session-update': updateSession(msg.data); updateStats(); break;
+        case 'agent-update': updateCard(msg.agent, msg.data); updateCounts(); updateSidebarAgentDots(); break;
+        case 'session-update': updateSession(msg.data); updateCounts(); break;
         case 'activity': addLogEntry(msg.data); break;
         case 'advisor-suggestions': for (const s of msg.data) addOrUpdateSuggestion(s); if (msg.data.some(s=>s.status==='pending')) pgAdvisorPanel.classList.add('expanded'); break;
         case 'advisor-update': addOrUpdateSuggestion(msg.data); break;

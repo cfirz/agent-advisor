@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.1] - 2026-04-04
+
+### Changed
+
+- Agent cards no longer show a redundant status dot or a separate error badge; status is conveyed by a left-border accent color instead of a glow effect.
+- Skills and tools on agent cards are now collapsed into an expandable summary element rather than listed inline, reducing visual noise.
+- Token counts are merged into the card footer row instead of occupying their own line.
+- Session stats (Defined, Active, Spawned counts) moved from a collapsible grid into the session bar, making them always visible.
+- Activity log height reduced and the log header is now sticky inline, keeping context visible while scrolling.
+- Spacing tightened across the sidebar, agent grid, page content area, and advisor panel.
+
 ## [1.2.0] - 2026-04-04
 
 ### Added
