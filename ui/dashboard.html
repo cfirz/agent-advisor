@@ -36,6 +36,58 @@
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 12px;
+    --btn-primary-text: #fff;
+    --tool-tag-bg: #261f0a;
+    --tool-tag-text: #eab308;
+    --tool-tag-border: #4a3a0a;
+    --status-completed-border: #1e40af;
+    --shadow-overlay: rgba(0,0,0,0.5);
+    --overlay-modal: rgba(0,0,0,0.6);
+    --overlay-onboarding: rgba(0,0,0,0.75);
+  }
+
+  [data-theme="light"] {
+    --bg-base: #f5f5f7;
+    --bg-surface: #ffffff;
+    --bg-surface-hover: #f0f0f2;
+    --bg-overlay: #e8e8ec;
+    --border-default: #d4d4d8;
+    --border-subtle: #e4e4e7;
+    --text-primary: #18181b;
+    --text-secondary: #52525b;
+    --text-tertiary: #a1a1aa;
+    --accent: #7c3aed;
+    --accent-dim: #6d28d9;
+    --accent-subtle: #c4b5fd;
+    --accent-bg: #ede9fe;
+    --status-active: #16a34a;
+    --status-active-bg: #dcfce7;
+    --status-active-border: #86efac;
+    --status-completed: #2563eb;
+    --status-completed-bg: #dbeafe;
+    --status-warning: #ca8a04;
+    --status-warning-bg: #fef9c3;
+    --status-error: #dc2626;
+    --status-error-bg: #fee2e2;
+    --status-error-border: #fca5a5;
+    --status-idle: #a1a1aa;
+    --sidebar-bg: #eeeef1;
+    --btn-primary-text: #ffffff;
+    --tool-tag-bg: #fef9c3;
+    --tool-tag-text: #854d0e;
+    --tool-tag-border: #fde68a;
+    --status-completed-border: #93c5fd;
+    --shadow-overlay: rgba(0,0,0,0.15);
+    --overlay-modal: rgba(0,0,0,0.3);
+    --overlay-onboarding: rgba(0,0,0,0.4);
+    color-scheme: light;
+  }
+
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition: background-color 0.3s ease, color 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -72,7 +124,7 @@
   .sidebar-logo {
     width: 28px; height: 28px; border-radius: 8px;
     background: var(--accent-dim); display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+    font-size: 14px; font-weight: 700; color: var(--btn-primary-text); flex-shrink: 0;
   }
 
   .sidebar-brand { font-size: 15px; font-weight: 600; color: var(--text-primary); flex: 1; }
@@ -162,7 +214,7 @@
     transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
     font-family: inherit;
   }
-  .btn-primary { background: var(--accent-dim); color: #fff; border-color: var(--accent-dim); }
+  .btn-primary { background: var(--accent-dim); color: var(--btn-primary-text); border-color: var(--accent-dim); }
   .btn-primary:hover { background: var(--accent); border-color: var(--accent); }
   .btn-secondary { background: var(--bg-surface); color: var(--text-secondary); }
   .btn-secondary:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
@@ -265,7 +317,7 @@
 
   .tool-tag {
     font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 10px;
-    background: #261f0a; color: #eab308; border: 1px solid #4a3a0a;
+    background: var(--tool-tag-bg); color: var(--tool-tag-text); border: 1px solid var(--tool-tag-border);
   }
 
   .agent-tokens {
@@ -436,7 +488,7 @@
     display: none; position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
     background: var(--accent-bg); border: 1px solid var(--accent-subtle); color: var(--accent);
     padding: 12px 20px; border-radius: var(--radius-md); font-size: 12px; font-family: var(--mono-font);
-    z-index: 1000; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    z-index: 1000; box-shadow: 0 4px 16px var(--shadow-overlay);
   }
   .advisor-toast.show { display: block; }
 
@@ -475,7 +527,7 @@
   }
   .detail-status-bar.working { background: var(--status-active-bg); border: 1px solid var(--status-active-border); color: var(--status-active); }
   .detail-status-bar.idle { background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-tertiary); }
-  .detail-status-bar.completed { background: var(--status-completed-bg); border: 1px solid #1e40af; color: var(--status-completed); }
+  .detail-status-bar.completed { background: var(--status-completed-bg); border: 1px solid var(--status-completed-border); color: var(--status-completed); }
 
   /* --- Form Styles --- */
   .form-group { margin-bottom: 20px; }
@@ -542,7 +594,7 @@
 
   /* --- Confirm Modal --- */
   .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; position: fixed; inset: 0; background: var(--overlay-modal);
     z-index: 999; align-items: center; justify-content: center;
   }
   .modal-overlay.visible { display: flex; }
@@ -592,7 +644,7 @@
 
   /* --- Onboarding Overlay --- */
   .onboarding-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    display: none; position: fixed; inset: 0; background: var(--overlay-onboarding);
     z-index: 2000; align-items: center; justify-content: center;
   }
   .onboarding-overlay.visible { display: flex; }
@@ -613,7 +665,7 @@
   .onboarding-feature-desc { font-size: 12px; color: var(--text-tertiary); line-height: 1.4; }
   .onboarding-dismiss {
     font-size: 14px; font-weight: 600; padding: 10px 28px; border-radius: var(--radius-sm);
-    background: var(--accent-dim); color: #fff; border: none; cursor: pointer; transition: background 0.15s;
+    background: var(--accent-dim); color: var(--btn-primary-text); border: none; cursor: pointer; transition: background 0.15s;
     font-family: inherit;
   }
   .onboarding-dismiss:hover { background: var(--accent); }
@@ -644,7 +696,65 @@
 
   /* --- Page title with subtitle --- */
   .page-subtitle { font-size: 13px; color: var(--text-tertiary); font-weight: 400; margin-top: 2px; }
+
+  /* --- Theme Toggle --- */
+  .sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .theme-toggle {
+    display: flex;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .theme-toggle-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 0;
+    font-size: 11px;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    min-height: 32px;
+  }
+
+  .theme-toggle-btn:hover {
+    color: var(--text-secondary);
+    background: var(--bg-surface-hover);
+  }
+
+  .theme-toggle-btn.active {
+    background: var(--bg-overlay);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .theme-toggle-icon {
+    font-size: 13px;
+    line-height: 1;
+  }
 </style>
+<script>
+  (function() {
+    var t = localStorage.getItem('dashboard-theme');
+    var resolved = (t === 'light') ? 'light' :
+                   (t === 'dark') ? 'dark' :
+                   (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    if (resolved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  })();
+</script>
 </head>
 <body>
 
@@ -673,6 +783,19 @@
         <div class="nav-empty">Loading...</div>
       </div>
     </nav>
+    <div class="sidebar-footer">
+      <div class="theme-toggle" id="themeToggle">
+        <button class="theme-toggle-btn" data-theme-choice="light" title="Light mode">
+          <span class="theme-toggle-icon">&#9788;</span> Light
+        </button>
+        <button class="theme-toggle-btn" data-theme-choice="dark" title="Dark mode">
+          <span class="theme-toggle-icon">&#9790;</span> Dark
+        </button>
+        <button class="theme-toggle-btn" data-theme-choice="system" title="Follow system preference">
+          <span class="theme-toggle-icon">&#9881;</span> Auto
+        </button>
+      </div>
+    </div>
   </aside>
 
   <!-- Main Area -->
@@ -743,6 +866,31 @@
   let currentPage = null;
   let pageCleanup = null;
   let pageUpdateHandler = null;
+
+  // --- Theme Management ---
+  const THEME_KEY = 'dashboard-theme';
+
+  function getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function resolveTheme(preference) {
+    if (preference === 'light' || preference === 'dark') return preference;
+    return getSystemTheme();
+  }
+
+  function applyTheme(resolved) {
+    if (resolved === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }
+
+  // Apply immediately (anti-FOUC script in <head> already handled first paint,
+  // but re-apply here to keep state consistent)
+  const savedThemePref = localStorage.getItem(THEME_KEY);
+  applyTheme(resolveTheme(savedThemePref));
 
   function getProjectData(projectId) {
     if (!projectId) return { agentRuntimeState: {}, activityLogEntries: [], sessionData: {}, agentDefinitions: [] };
@@ -855,6 +1003,39 @@
   const modalBody = document.getElementById('modalBody');
   const modalCancel = document.getElementById('modalCancel');
   const modalConfirm = document.getElementById('modalConfirm');
+
+  // --- Theme Toggle ---
+  const themeToggle = document.getElementById('themeToggle');
+  const themeButtons = themeToggle.querySelectorAll('.theme-toggle-btn');
+
+  function setActiveThemeButton(preference) {
+    const pref = preference || 'system';
+    themeButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.themeChoice === pref);
+    });
+  }
+
+  setActiveThemeButton(savedThemePref);
+
+  themeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.theme-toggle-btn');
+    if (!btn) return;
+    const choice = btn.dataset.themeChoice;
+    document.documentElement.classList.add('theme-transitioning');
+    localStorage.setItem(THEME_KEY, choice);
+    applyTheme(resolveTheme(choice));
+    setActiveThemeButton(choice);
+    setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 350);
+  });
+
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+    const pref = localStorage.getItem(THEME_KEY);
+    if (!pref || pref === 'system') {
+      document.documentElement.classList.add('theme-transitioning');
+      applyTheme(resolveTheme('system'));
+      setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 350);
+    }
+  });
 
   // --- Modal ---
   let modalResolve = null;

@@ -211,7 +211,7 @@ The dashboard converts raw tool calls into human-readable descriptions:
 
 ### Dashboard (`ui/dashboard.html`)
 - Single HTML file with inline CSS and JavaScript
-- Dark theme (GitHub dark palette)
+- Light/dark/auto theme toggle in the sidebar — "Auto" follows OS `prefers-color-scheme`; preference persists in `localStorage`
 - Project tabs bar above the page content — click to switch projects, hover to reveal a close button that removes the project from the dashboard
 - Session summary bar with duration, agent count, token usage, and error count
 - Responsive CSS grid layout for agent cards with token counters
@@ -296,7 +296,7 @@ agent-advisor/
 ├── server/
 │   └── server.mjs               # Zero-dep Node.js HTTP + WebSocket server
 ├── ui/
-│   └── dashboard.html           # Single-page dashboard (inline CSS/JS, dark theme)
+│   └── dashboard.html           # Single-page dashboard (inline CSS/JS, light/dark/auto theme)
 ├── skills/
 │   ├── dashboard/
 │   │   └── SKILL.md             # /agent-advisor:dashboard slash command

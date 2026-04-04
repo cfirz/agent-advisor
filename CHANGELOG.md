@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- Light/dark/auto theme toggle in the dashboard sidebar. "Auto" follows the OS `prefers-color-scheme` preference. The selected theme persists in `localStorage` and is applied before first paint to prevent a flash of the wrong theme.
+- Smooth 0.3s transition animation when switching themes.
+- All dashboard colors converted from hardcoded values to CSS custom properties, enabling correct theme switching across every component.
+- Light theme uses a warm off-white palette (`#f5f5f7` base, `#ffffff` surface) for comfortable daytime use.
+
 ## [1.2.1] - 2026-04-04
 
 ### Changed
