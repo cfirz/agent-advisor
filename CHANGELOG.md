@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - All dashboard colors converted from hardcoded values to CSS custom properties, enabling correct theme switching across every component.
 - Light theme uses a warm off-white palette (`#f5f5f7` base, `#ffffff` surface) for comfortable daytime use.
 
+### Fixed
+
+- Worktree subagents (spawned with `isolation: "worktree"`) no longer appear as separate project tabs in the dashboard. The server now detects `.claude/worktrees/` paths via a `resolveWorktreeParentCwd()` helper and redirects all worktree events to the parent project. Session start/end and stop events from worktree sessions are also suppressed to prevent phantom archive entries. Stale worktree entries are skipped when loading the projects registry on startup.
+
 ## [1.3.0] - 2026-04-04
 
 ### Added

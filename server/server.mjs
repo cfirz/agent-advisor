@@ -41,6 +41,17 @@ function normalizeCwd(cwd) {
   return normalized;
 }
 
+/**
+ * If `normalizedCwd` is inside a .claude/worktrees/ directory, return the parent project cwd.
+ * E.g. "E:/UnityProjects/my-project/.claude/worktrees/agent-a5e04294"
+ *   -> "E:/UnityProjects/my-project"
+ * Returns null if not a worktree path.
+ */
+function resolveWorktreeParentCwd(normalizedCwd) {
+  const idx = normalizedCwd.indexOf('/.claude/worktrees/');
+  return idx === -1 ? null : normalizedCwd.substring(0, idx);
+}
+
 // --- ProjectState Class ---
 
 class ProjectState {
@@ -370,7 +381,10 @@ async function loadProjectsRegistry() {
     const arr = JSON.parse(raw);
     for (const entry of arr) {
       const cwd = normalizeCwd(entry.cwd);
-      if (cwd && !projects.has(cwd)) {
+      if (!cwd) continue;
+      // Skip worktree entries — they'll be resolved to parent on next event
+      if (resolveWorktreeParentCwd(cwd)) continue;
+      if (!projects.has(cwd)) {
         const proj = new ProjectState(cwd);
         proj.lastSeen = entry.lastSeen || 0;
         if (entry.name) proj.name = entry.name;
@@ -392,8 +406,11 @@ async function saveProjectsRegistry() {
 }
 
 async function getOrCreateProject(cwd) {
-  const normalized = normalizeCwd(cwd);
+  let normalized = normalizeCwd(cwd);
   if (!normalized) return null;
+  // Redirect worktree paths to parent project
+  const parentCwd = resolveWorktreeParentCwd(normalized);
+  if (parentCwd) normalized = parentCwd;
   if (projects.has(normalized)) {
     const proj = projects.get(normalized);
     proj.lastSeen = Date.now();
@@ -420,7 +437,18 @@ function resolveProject(body) {
   // Try cwd in body
   if (body.cwd) {
     const normalized = normalizeCwd(body.cwd);
-    return projects.get(normalized) || null;
+    const direct = projects.get(normalized);
+    if (direct) return direct;
+    // Worktree path? Resolve to parent project
+    const parentCwd = resolveWorktreeParentCwd(normalized);
+    if (parentCwd) {
+      const parentProj = projects.get(parentCwd);
+      if (parentProj) {
+        // Cache session mapping so subsequent events fast-path
+        if (body.session_id) sessionToProject.set(body.session_id, parentCwd);
+        return parentProj;
+      }
+    }
   }
   // Fallback: if only one project, use it
   if (projects.size === 1) {
@@ -433,6 +461,7 @@ const TEMP_PROJECT_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-/;
 
 function isTempProject(cwd, name) {
   if (cwd.includes('.paperclip/instances/')) return true;
+  if (cwd.includes('/.claude/worktrees/')) return true;
   if (TEMP_PROJECT_RE.test(name)) return true;
   if (name === '_default') return true;
   return false;
@@ -711,6 +740,10 @@ function handlePostToolUseFailure(proj, body) {
 }
 
 function handleStop(proj, body) {
+  // Ignore Stop from worktree subagents — parent's SubagentStop handles completion
+  const normalized = normalizeCwd(body.cwd || '');
+  if (resolveWorktreeParentCwd(normalized)) return;
+
   const agent = proj.getAgentState(ORCHESTRATOR, ORCHESTRATOR);
   agent.status = 'completed';
   agent.activity = 'Turn finished';
@@ -801,8 +834,19 @@ function archiveCurrentSession(proj) {
 async function handleSessionStart(body) {
   const cwd = body.cwd;
   if (!cwd) return null;
+
+  const normalized = normalizeCwd(cwd);
+  const isWorktree = !!resolveWorktreeParentCwd(normalized);
+
   const proj = await getOrCreateProject(cwd);
   if (!proj) return null;
+
+  // Worktree subagent: just map its session_id, don't archive/reset parent session
+  if (isWorktree) {
+    if (body.session_id) sessionToProject.set(body.session_id, proj.cwd);
+    proj.lastSeen = Date.now();
+    return proj;
+  }
 
   // Archive previous session if one exists
   archiveCurrentSession(proj);
@@ -840,6 +884,13 @@ async function handleSessionStart(body) {
 }
 
 function handleSessionEnd(proj, body) {
+  // Worktree subagent ended: just clean up session mapping, don't archive parent
+  const normalized = normalizeCwd(body.cwd || '');
+  if (resolveWorktreeParentCwd(normalized)) {
+    if (body.session_id) sessionToProject.delete(body.session_id);
+    return;
+  }
+
   // Archive session before logging end message
   archiveCurrentSession(proj);
 
