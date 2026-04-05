@@ -206,7 +206,7 @@ The dashboard converts raw tool calls into human-readable descriptions:
 - Skills and tools are cleared when an agent returns to idle
 - Advisor system: accumulates per-agent metrics, stores suggestions, handles approve/dismiss; supports seven suggestion types with allowlist-based path validation (`validateSuggestionPath`) and write-or-append file handling (`writeSuggestionFile`)
 - Persists advisor data (metrics + suggestions) to `.claude/advisor-data/`
-- **Session archival**: sessions are snapshotted on `SessionEnd` and stored in `.claude/advisor-data/sessions.json` (max 50 per project); each record includes agents, activity log, and per-agent-type metrics breakdown
+- **Session archival**: sessions are snapshotted on `SessionEnd` and stored in `.claude/advisor-data/sessions.json` (max 50 per project); each record includes agents, activity log, per-agent-type metrics breakdown, and `skillCount`/`uniqueSkills` for analytics
 - Filters temporary and internal projects (`.paperclip/instances/` paths, UUID-prefixed names, `_default`) from the projects list
 - `DELETE /api/projects` endpoint removes a project from server state and persists the change
 - `GET /api/sessions` — list all sessions (archived + active) for a project, sorted most-recent-first
@@ -220,6 +220,15 @@ The dashboard converts raw tool calls into human-readable descriptions:
 - **Sessions list page** (`#/sessions`) — table of all recorded sessions with date, duration, agent count, tokens, and errors; updates in real time via `session-archived` WebSocket message
 - **Session detail page** (`#/sessions/:id`) — three tabs: Agents (card grid), Activity (filtered log), Metrics (totals + per-agent breakdown table); works for both live and archived sessions
 - **Session selector dropdown** on the main dashboard — switch between the live session and any historical session without leaving the page
+- **Analytics page** (`#/analytics`) — Canvas-based multi-series line chart plotting session performance over time; no external dependencies
+  - 5 tracked metrics: Agent Count, Skill Count, Total Tokens, Error Count, Session Duration
+  - Metric toggle chips to show/hide individual series
+  - Date range filter (from/to date inputs)
+  - Dual Y-axes: left axis for counts, right axis for tokens and duration
+  - Hover tooltips showing all metric values for a given session
+  - Responsive redraw via `ResizeObserver`
+  - Real-time updates on `session-archived` and `session-update` WebSocket events
+  - Theme-aware canvas: redraws automatically when the light/dark theme is switched
 - Session summary bar with duration, agent count, token usage, and error count
 - Responsive CSS grid layout for agent cards with token counters
 - Skills shown as purple tags, tools as orange tags on each card

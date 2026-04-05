@@ -827,6 +827,131 @@
     font-size: 13px;
     line-height: 1;
   }
+
+  /* Analytics page */
+  .analytics-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .analytics-controls .control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .analytics-controls .control-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .metric-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .metric-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .metric-chip:hover { background: var(--bg-surface-hover); }
+  .metric-chip.active {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--text-primary);
+  }
+  .metric-chip .chip-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .date-input {
+    padding: 5px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: inherit;
+  }
+  .date-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .chart-wrapper {
+    position: relative;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px 16px 12px;
+    min-height: 380px;
+  }
+  .chart-canvas-container {
+    position: relative;
+    width: 100%;
+    height: 340px;
+  }
+  .chart-canvas-container canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+  .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg-overlay);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text-primary);
+    z-index: 100;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px var(--shadow-overlay);
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .chart-tooltip.visible { opacity: 1; }
+  .chart-tooltip .tt-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 11px;
+  }
+  .chart-tooltip .tt-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+  }
+  .chart-tooltip .tt-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .chart-tooltip .tt-label { color: var(--text-secondary); }
+  .chart-tooltip .tt-value { font-weight: 600; margin-left: auto; font-family: var(--mono-font); }
+  .chart-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 340px;
+    color: var(--text-tertiary);
+    font-size: 14px;
+  }
 </style>
 <script>
   (function() {
@@ -864,6 +989,13 @@
           <rect x="2" y="12" width="12" height="3" rx="1"/>
         </svg>
         Sessions
+      </div>
+      <div class="nav-item" data-route="#/analytics">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1,13 5,7 9,9 15,3"/>
+          <polyline points="11,3 15,3 15,7"/>
+        </svg>
+        Analytics
       </div>
       <div class="nav-section">
         Agents
@@ -1115,7 +1247,10 @@
     localStorage.setItem(THEME_KEY, choice);
     applyTheme(resolveTheme(choice));
     setActiveThemeButton(choice);
-    setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 350);
+    setTimeout(() => {
+      document.documentElement.classList.remove('theme-transitioning');
+      window.dispatchEvent(new Event('theme-changed'));
+    }, 350);
   });
 
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
@@ -1123,7 +1258,10 @@
     if (!pref || pref === 'system') {
       document.documentElement.classList.add('theme-transitioning');
       applyTheme(resolveTheme('system'));
-      setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 350);
+      setTimeout(() => {
+        document.documentElement.classList.remove('theme-transitioning');
+        window.dispatchEvent(new Event('theme-changed'));
+      }, 350);
     }
   });
 
@@ -1282,6 +1420,8 @@
     } else if (hash.startsWith('#/sessions/')) {
       const sid = decodeURIComponent(hash.replace('#/sessions/', ''));
       renderSessionDetailPage(sid);
+    } else if (hash === '#/analytics') {
+      renderAnalyticsPage();
     } else if (hash === '#/agents') {
       renderAgentsListPage();
     } else if (hash === '#/agents/new') {
@@ -2302,6 +2442,362 @@
         sessData.activityLog.push(msg.data);
         if (activeTab === 'activity') renderTab();
       }
+    };
+  }
+
+  // ============================================================
+  // PAGE: Analytics
+  // ============================================================
+  function renderAnalyticsPage() {
+    const container = document.getElementById('pageContent');
+    container.innerHTML = `
+      <div class="page-header"><h2 class="page-title">Analytics</h2></div>
+      <div class="analytics-controls">
+        <div class="control-group">
+          <span class="control-label">Metrics</span>
+          <div class="metric-chips" id="metricChips"></div>
+        </div>
+        <div class="control-group" style="margin-left:auto">
+          <span class="control-label">From</span>
+          <input type="date" class="date-input" id="dateFrom">
+          <span class="control-label">To</span>
+          <input type="date" class="date-input" id="dateTo">
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <div class="chart-canvas-container" id="chartContainer">
+          <canvas id="analyticsCanvas"></canvas>
+        </div>
+        <div class="chart-tooltip" id="chartTooltip"></div>
+      </div>
+    `;
+
+    const METRICS = [
+      { key: 'agentCount',  label: 'Agents',   color: '#a78bfa', axis: 'left',  format: v => String(v) },
+      { key: 'skillCount',  label: 'Skills',   color: '#c084fc', axis: 'left',  format: v => String(v) },
+      { key: 'totalTokens', label: 'Tokens',   color: '#60a5fa', axis: 'right', format: formatTokens },
+      { key: 'totalErrors', label: 'Errors',   color: '#f87171', axis: 'left',  format: v => String(v) },
+      { key: 'duration',    label: 'Duration', color: '#4ade80', axis: 'right', format: v => formatDuration(v) },
+    ];
+
+    let activeMetrics = new Set(METRICS.map(m => m.key));
+    let sessions = [];
+    let filtered = [];
+
+    // Build metric chips
+    const chipsEl = document.getElementById('metricChips');
+    METRICS.forEach(m => {
+      const chip = document.createElement('div');
+      chip.className = 'metric-chip active';
+      chip.dataset.key = m.key;
+      chip.innerHTML = '<span class="chip-dot" style="background:' + m.color + '"></span>' + m.label;
+      chip.addEventListener('click', () => {
+        if (activeMetrics.has(m.key)) {
+          if (activeMetrics.size <= 1) return;
+          activeMetrics.delete(m.key);
+          chip.classList.remove('active');
+        } else {
+          activeMetrics.add(m.key);
+          chip.classList.add('active');
+        }
+        drawChart();
+      });
+      chipsEl.appendChild(chip);
+    });
+
+    // Date filters
+    const dateFrom = document.getElementById('dateFrom');
+    const dateTo = document.getElementById('dateTo');
+    function onDateChange() {
+      applyFilters();
+      drawChart();
+    }
+    dateFrom.addEventListener('change', onDateChange);
+    dateTo.addEventListener('change', onDateChange);
+
+    function applyFilters() {
+      const from = dateFrom.value ? new Date(dateFrom.value + 'T00:00:00').getTime() : 0;
+      const to = dateTo.value ? new Date(dateTo.value + 'T23:59:59').getTime() : Infinity;
+      filtered = sessions.filter(s => {
+        const t = s.startTime || 0;
+        return t >= from && t <= to;
+      });
+    }
+
+    function extractValue(s, key) {
+      if (key === 'totalTokens') {
+        const t = s.totalTokens || {};
+        return (t.input || 0) + (t.output || 0) + (t.cacheCreation || 0) + (t.cacheRead || 0);
+      }
+      if (key === 'duration') return s.duration || 0;
+      return s[key] || 0;
+    }
+
+    // Canvas chart drawing
+    const canvas = document.getElementById('analyticsCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('chartTooltip');
+    const chartContainer = document.getElementById('chartContainer');
+
+    function drawChart() {
+      // Reset inline size so CSS width:100% flows, then measure
+      canvas.style.width = '';
+      canvas.style.height = '';
+      const rect = chartContainer.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const W = rect.width;
+      const H = rect.height;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Clear
+      ctx.clearRect(0, 0, W, H);
+
+      if (filtered.length === 0) {
+        ctx.fillStyle = getCSS('--text-tertiary');
+        ctx.font = '14px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No session data yet', W / 2, H / 2);
+        return;
+      }
+
+      const padL = 58, padR = 58, padT = 16, padB = 54;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const visibleMetrics = METRICS.filter(m => activeMetrics.has(m.key));
+      const leftMetrics = visibleMetrics.filter(m => m.axis === 'left');
+      const rightMetrics = visibleMetrics.filter(m => m.axis === 'right');
+
+      // Compute axis ranges
+      function axisRange(metrics) {
+        let max = 0;
+        for (const m of metrics) {
+          for (const s of filtered) {
+            const v = extractValue(s, m.key);
+            if (v > max) max = v;
+          }
+        }
+        if (max === 0) max = 1;
+        return niceMax(max);
+      }
+
+      function niceMax(v) {
+        if (v <= 0) return 1;
+        const mag = Math.pow(10, Math.floor(Math.log10(v)));
+        const norm = v / mag;
+        if (norm <= 1) return mag;
+        if (norm <= 2) return 2 * mag;
+        if (norm <= 5) return 5 * mag;
+        return 10 * mag;
+      }
+
+      const leftMax = leftMetrics.length ? axisRange(leftMetrics) : 1;
+      const rightMax = rightMetrics.length ? axisRange(rightMetrics) : 1;
+
+      // Grid lines
+      const gridColor = getCSS('--border-subtle');
+      const textColor = getCSS('--text-tertiary');
+      ctx.strokeStyle = gridColor;
+      ctx.lineWidth = 1;
+      const GRID_LINES = 5;
+      ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+
+      for (let i = 0; i <= GRID_LINES; i++) {
+        const y = padT + plotH - (i / GRID_LINES) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(W - padR, y);
+        ctx.stroke();
+
+        // Left axis labels
+        if (leftMetrics.length) {
+          ctx.fillStyle = leftMetrics[0].color;
+          ctx.textAlign = 'right';
+          const val = (i / GRID_LINES) * leftMax;
+          ctx.fillText(formatAxisVal(val), padL - 8, y + 3);
+        }
+
+        // Right axis labels
+        if (rightMetrics.length) {
+          ctx.fillStyle = rightMetrics[0].color;
+          ctx.textAlign = 'left';
+          const val = (i / GRID_LINES) * rightMax;
+          ctx.fillText(formatAxisVal(val, rightMetrics[0].key), W - padR + 8, y + 3);
+        }
+      }
+
+      // X-axis labels
+      const maxLabels = Math.floor(plotW / 80);
+      const step = Math.max(1, Math.ceil(filtered.length / maxLabels));
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      for (let i = 0; i < filtered.length; i += step) {
+        const x = padL + (filtered.length === 1 ? plotW / 2 : (i / (filtered.length - 1)) * plotW);
+        const t = filtered[i].startTime;
+        const d = new Date(t);
+        const lbl = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        ctx.fillText(lbl, x, H - padB + 18);
+        const timeLbl = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        ctx.fillText(timeLbl, x, H - padB + 32);
+      }
+
+      // Draw lines + area fills + points
+      for (const m of visibleMetrics) {
+        const max = m.axis === 'left' ? leftMax : rightMax;
+        const points = filtered.map((s, i) => {
+          const x = padL + (filtered.length === 1 ? plotW / 2 : (i / (filtered.length - 1)) * plotW);
+          const v = extractValue(s, m.key);
+          const y = padT + plotH - (v / max) * plotH;
+          return { x, y, v };
+        });
+
+        // Area fill
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, padT + plotH);
+        for (const p of points) ctx.lineTo(p.x, p.y);
+        ctx.lineTo(points[points.length - 1].x, padT + plotH);
+        ctx.closePath();
+        ctx.fillStyle = m.color + '18';
+        ctx.fill();
+
+        // Line
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let j = 1; j < points.length; j++) ctx.lineTo(points[j].x, points[j].y);
+        ctx.strokeStyle = m.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Points
+        for (const p of points) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = m.color;
+          ctx.fill();
+          ctx.strokeStyle = getCSS('--bg-surface');
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      }
+
+      // Store computed points for tooltip lookup
+      canvas._chartData = { filtered, padL, padR, padT, plotW, plotH };
+    }
+
+    function formatAxisVal(v, key) {
+      if (key === 'duration') {
+        if (v >= 60000) return Math.round(v / 60000) + 'm';
+        return Math.round(v / 1000) + 's';
+      }
+      if (key === 'totalTokens' || v >= 10000) return formatTokens(v);
+      if (v >= 1000) return (v / 1000).toFixed(1) + 'K';
+      if (Number.isInteger(v)) return String(v);
+      return v.toFixed(1);
+    }
+
+    function getCSS(varName) {
+      return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    }
+
+    // Tooltip
+    canvas.addEventListener('mousemove', e => {
+      const cd = canvas._chartData;
+      if (!cd || !cd.filtered.length) { tooltip.classList.remove('visible'); return; }
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+
+      // Find nearest session index
+      const n = cd.filtered.length;
+      let bestIdx = 0;
+      let bestDist = Infinity;
+      for (let i = 0; i < n; i++) {
+        const x = cd.padL + (n === 1 ? cd.plotW / 2 : (i / (n - 1)) * cd.plotW);
+        const dist = Math.abs(mx - x);
+        if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+      }
+      if (bestDist > 40) { tooltip.classList.remove('visible'); return; }
+
+      const s = cd.filtered[bestIdx];
+      const d = new Date(s.startTime);
+      const visibleMetrics = METRICS.filter(m => activeMetrics.has(m.key));
+
+      let html = '<div class="tt-title">' + d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) + '</div>';
+      for (const m of visibleMetrics) {
+        const v = extractValue(s, m.key);
+        html += '<div class="tt-row"><span class="tt-dot" style="background:' + m.color + '"></span><span class="tt-label">' + m.label + '</span><span class="tt-value">' + m.format(v) + '</span></div>';
+      }
+      tooltip.innerHTML = html;
+      tooltip.classList.add('visible');
+
+      // Position tooltip
+      const ptX = cd.padL + (n === 1 ? cd.plotW / 2 : (bestIdx / (n - 1)) * cd.plotW);
+      const wrapRect = chartContainer.parentElement.getBoundingClientRect();
+      const ttW = tooltip.offsetWidth;
+      let left = ptX + 16;
+      if (left + ttW > wrapRect.width - 20) left = ptX - ttW - 16;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = cd.padT + 'px';
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('visible');
+    });
+
+    // ResizeObserver for responsive redraw
+    const ro = new ResizeObserver(() => drawChart());
+    ro.observe(chartContainer);
+
+    // Load data
+    async function loadData() {
+      try {
+        const res = await fetch(apiUrl('/api/sessions'));
+        sessions = await res.json();
+      } catch { sessions = []; }
+      // Sort ascending by time for chart
+      sessions.sort((a, b) => (a.startTime || 0) - (b.startTime || 0));
+      applyFilters();
+      drawChart();
+    }
+
+    loadData();
+
+    // Real-time: listen for new archived sessions
+    pageUpdateHandler = function(msg) {
+      if (msg.type === 'session-archived') {
+        // Remove active entry for same session to prevent duplicates
+        const idx = sessions.findIndex(s => s.sessionId === msg.data.sessionId);
+        if (idx >= 0) sessions.splice(idx, 1);
+        sessions.push(msg.data);
+        sessions.sort((a, b) => (a.startTime || 0) - (b.startTime || 0));
+        applyFilters();
+        drawChart();
+      } else if (msg.type === 'session-update') {
+        // Update active session metrics in real-time
+        const idx = sessions.findIndex(s => s.status === 'active');
+        if (idx >= 0) {
+          sessions[idx].agentCount = msg.data.agentCount;
+          sessions[idx].totalErrors = msg.data.totalErrors;
+          sessions[idx].totalTokens = { ...msg.data.totalTokens };
+          sessions[idx].skillCount = msg.data.skillCount;
+          sessions[idx].duration = msg.data.startTime ? Date.now() - msg.data.startTime : null;
+          applyFilters();
+          drawChart();
+        }
+      }
+    };
+
+    // Redraw chart on theme change so canvas picks up new CSS vars
+    function onThemeChanged() { drawChart(); }
+    window.addEventListener('theme-changed', onThemeChanged);
+
+    // Cleanup
+    pageCleanup = function() {
+      ro.disconnect();
+      window.removeEventListener('theme-changed', onThemeChanged);
     };
   }
 

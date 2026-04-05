@@ -30,6 +30,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Session Performance Analytics page** (`#/analytics`) — Canvas-based multi-series line chart visualizing session history over time. No external chart library; built entirely on the HTML5 Canvas API.
+  - 5 tracked metrics: Agent Count, Skill Count, Total Tokens, Error Count, Session Duration
+  - Interactive metric toggle chips to show or hide individual series
+  - Date range filter with from/to date inputs
+  - Dual Y-axes: left axis for count-scale metrics, right axis for tokens and duration
+  - Hover tooltips showing all active metric values for the nearest session point
+  - Responsive redraw via `ResizeObserver` — chart adjusts automatically when the panel is resized
+  - Real-time updates triggered by `session-archived` and `session-update` WebSocket events
+  - Theme-aware canvas rendering: redraws on dark/light theme switch so colors stay consistent
+- `skillCount` and `uniqueSkills` fields added to session state tracking on the server — accumulated as `Skill` tool-use events arrive and archived with each session record; exposed via `GET /api/sessions` and `GET /api/sessions/:id` for the Analytics chart.
+
 - Light/dark/auto theme toggle in the dashboard sidebar. "Auto" follows the OS `prefers-color-scheme` preference. The selected theme persists in `localStorage` and is applied before first paint to prevent a flash of the wrong theme.
 - Smooth 0.3s transition animation when switching themes.
 - All dashboard colors converted from hardcoded values to CSS custom properties, enabling correct theme switching across every component.

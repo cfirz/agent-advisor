@@ -33,9 +33,9 @@ No build step, no npm install, no test framework. Pure vanilla JS/HTML with only
 
 1. **Hooks** (`hooks/hooks.json`) — HTTP hooks registered with Claude Code: `SubagentStart`, `SubagentStop`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `Notification`, `SessionStart`, `SessionEnd` — all POST to `localhost:8099/hooks/*`. The `SessionStart` hook includes a command hook that auto-starts the server if not already running.
 
-2. **Server** (`server/server.mjs`) — Stateful HTTP+WebSocket server. Maintains an `agents` Map and a circular `activityLog` buffer (max 100). Custom RFC 6455 WebSocket frame encoder/decoder (no library). Stale detection every 5s (30s → amber warning, 90s → auto-idle). Also maintains `metrics` (persisted to `.claude/advisor-data/metrics.json`), `suggestions` (persisted to `.claude/advisor-data/suggestions.json`), and `sessionHistory` (persisted to `.claude/advisor-data/sessions.json`, max 50 per project).
+2. **Server** (`server/server.mjs`) — Stateful HTTP+WebSocket server. Maintains an `agents` Map and a circular `activityLog` buffer (max 100). Custom RFC 6455 WebSocket frame encoder/decoder (no library). Stale detection every 5s (30s → amber warning, 90s → auto-idle). Also maintains `metrics` (persisted to `.claude/advisor-data/metrics.json`), `suggestions` (persisted to `.claude/advisor-data/suggestions.json`), and `sessionHistory` (persisted to `.claude/advisor-data/sessions.json`, max 50 per project). Each session tracks `skillCount` and `uniqueSkills[]` at the session level, incremented in `handlePreToolUse()` and included in `archiveCurrentSession()`.
 
-3. **UI** (`ui/dashboard.html`) — Single self-contained HTML file with inline CSS/JS. Dark theme (GitHub palette). Agent cards grid, Agent Advisor panel, activity log. WebSocket with exponential backoff reconnect, HTTP polling (2s) as fallback.
+3. **UI** (`ui/dashboard.html`) — Single self-contained HTML file with inline CSS/JS. Dark theme (GitHub palette). Agent cards grid, Agent Advisor panel, activity log, and Analytics page. WebSocket with exponential backoff reconnect, HTTP polling (2s) as fallback.
 
 **Key design choice:** Multiple agents of the same type share one card (latest instance shown); the activity log tracks all instances individually.
 
@@ -56,6 +56,7 @@ No build step, no npm install, no test framework. Pure vanilla JS/HTML with only
 idle → working (SubagentStart) → completed (SubagentStop) → idle (30s timeout)
                 ↑ activity updates (PreToolUse/PostToolUse)
                 ↑ stale detection (30s amber, 90s auto-idle)
+                ↑ session-level skill tracking (PreToolUse increments skillCount/uniqueSkills)
 ```
 
 ## Agent Advisor Feature
@@ -82,8 +83,33 @@ Hook events → server accumulates metrics → /advisor skill fetches + analyzes
 - `POST /api/advisor/suggestions` — ingest suggestions from the advisor skill
 - `POST /api/advisor/approve` — write agent file to disk
 - `POST /api/advisor/dismiss` — mark dismissed
-- `GET /api/sessions` — list all sessions (archived + active), sorted most-recent-first
-- `GET /api/sessions/:id` — full session detail: agents snapshot, activity log, metrics breakdown
+- `GET /api/sessions` — list all sessions (archived + active), sorted most-recent-first; each entry includes `skillCount`
+- `GET /api/sessions/:id` — full session detail: agents snapshot, activity log, metrics breakdown; includes `skillCount` and `uniqueSkills[]`
+
+## Analytics Page
+
+The UI includes an Analytics page (route `#/analytics`) that charts session history over time.
+
+**Implementation:** `renderAnalyticsPage()` in `ui/dashboard.html`. Canvas-based multi-series line chart with no external dependencies.
+
+**Metrics tracked per session (5 series):**
+
+| Key | Label | Y-axis |
+|-----|-------|--------|
+| `agentCount` | Agents | Left |
+| `skillCount` | Skills | Left |
+| `totalErrors` | Errors | Left |
+| `totalTokens` | Tokens | Right |
+| `duration` | Duration | Right |
+
+**Features:**
+- Metric toggle chips — click to show/hide individual series
+- Date range filter (from/to date inputs)
+- Dual Y-axes: left for counts, right for tokens and duration
+- Hover tooltips showing per-metric values at a given session point
+- Responsive via `ResizeObserver` (redraws on container resize)
+- Real-time updates via `session-archived` and `session-update` WebSocket events
+- Theme-aware canvas rendering (redraws on theme change)
 
 ## Versioning & Release Tagging
 

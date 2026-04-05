@@ -78,6 +78,8 @@ class ProjectState {
       totalTokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
       totalErrors: 0,
       agentCount: 0,
+      skillCount: 0,
+      uniqueSkills: [],
     };
 
     // Metrics & suggestions
@@ -745,6 +747,10 @@ function handlePreToolUse(proj, body) {
     if (skillName && !agent.skills.includes(skillName)) {
       agent.skills.push(skillName);
     }
+    if (skillName && !proj.sessionState.uniqueSkills.includes(skillName)) {
+      proj.sessionState.uniqueSkills.push(skillName);
+      proj.sessionState.skillCount++;
+    }
   } else if (toolName && !agent.tools.includes(toolName)) {
     agent.tools.push(toolName);
   }
@@ -820,6 +826,8 @@ function archiveCurrentSession(proj) {
       totalTokens: { ...proj.sessionState.totalTokens },
       totalErrors: proj.sessionState.totalErrors,
       agentCount: proj.sessionState.agentCount,
+      skillCount: proj.sessionState.skillCount,
+      uniqueSkills: [...proj.sessionState.uniqueSkills],
       agentBreakdown: {},
     },
   };
@@ -865,6 +873,7 @@ function archiveCurrentSession(proj) {
       agentCount: record.metrics.agentCount,
       totalErrors: record.metrics.totalErrors,
       totalTokens: record.metrics.totalTokens,
+      skillCount: record.metrics.skillCount,
     },
   });
 }
@@ -900,6 +909,8 @@ async function handleSessionStart(body) {
   proj.sessionState.totalTokens = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
   proj.sessionState.totalErrors = 0;
   proj.sessionState.agentCount = 0;
+  proj.sessionState.skillCount = 0;
+  proj.sessionState.uniqueSkills = [];
 
   // Reset all agents
   for (const [key, agent] of proj.agents) {
@@ -1188,6 +1199,7 @@ const server = createServer(async (req, res) => {
       agentCount: s.metrics?.agentCount || 0,
       totalErrors: s.metrics?.totalErrors || 0,
       totalTokens: s.metrics?.totalTokens || { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+      skillCount: s.metrics?.skillCount || 0,
     }));
 
     // Append current active session
@@ -1201,6 +1213,7 @@ const server = createServer(async (req, res) => {
         agentCount: proj.sessionState.agentCount,
         totalErrors: proj.sessionState.totalErrors,
         totalTokens: { ...proj.sessionState.totalTokens },
+        skillCount: proj.sessionState.skillCount,
       });
     }
 
@@ -1232,6 +1245,8 @@ const server = createServer(async (req, res) => {
           totalTokens: { ...proj.sessionState.totalTokens },
           totalErrors: proj.sessionState.totalErrors,
           agentCount: proj.sessionState.agentCount,
+          skillCount: proj.sessionState.skillCount,
+          uniqueSkills: [...proj.sessionState.uniqueSkills],
           agentBreakdown: {},
         },
       });
